@@ -150,9 +150,9 @@ REST_FRAMEWORK = {
 CELERY_TIMEZONE = "Africa/Tunis"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-CELERY_BROKER_URL = 'sqla+sqlite:///.var/celerydb.sqlite'
-CELERY_RESULT_BACKEND = 'db+sqlite:///.var/celery-results.sqlite'
-CELERY_BEAT_SCHEDULE_FILENAME='.var/celerybeat-schedule'
+CELERY_BROKER_URL = f"sqla+sqlite:///{os.path.join(BASE_DIR, '.var/celerydb.sqlite')}"
+CELERY_RESULT_BACKEND = f"db+sqlite:///{os.path.join(BASE_DIR, '.var/celery-results.sqlite')}"
+CELERY_BEAT_SCHEDULE_FILENAME=os.path.join(BASE_DIR, '.var/celerybeat-schedule')
 
 CELERY_BEAT_SCHEDULE = {
     "fetch-guardian-articles-periodically": {
