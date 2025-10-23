@@ -34,26 +34,18 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-### Run background task workers
+### Run tasks
 
-To run both news fetching and embeddings tasks together:
+**News Fetching**
 
 ```bash
-celery -A newsaic worker -E -Q news_fetching,embeddings -c 1 -B -l DEBUG
+python manage.py fetch_articles
 ```
 
-Or run them separately:
-
-**News Fetcher**
+**Article Embedding**
 
 ```bash
-celery -A newsaic worker -E -Q news_fetching -c 1 -B -l DEBUG
-```
-
-**Embeddings**
-
-```bash
-celery -A newsaic worker -E -Q embeddings -c 1 -B -l DEBUG
+python manage.py embed_articles
 ```
 
 ## Development
