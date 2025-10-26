@@ -10,6 +10,11 @@ class DailyHighlight(models.Model):
 
     persona_snapshot = EmbeddedModelField(AuthorPersona)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', '-created_at'])
+        ]
+
     def __str__(self):
         stories_count = self.stories.count()
         return f"Highlights for {self.user.username} on {self.created_at.date()} ({stories_count} stories)"
