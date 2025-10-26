@@ -131,3 +131,18 @@ class Article(models.Model):
             VectorSearchIndex(name="text_search_index", fields=["embedding"], similarities=["cosine"])
         ]
 
+
+class Chunk(models.Model):
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='chunks')
+    chunk_index = models.PositiveIntegerField()
+    text = models.TextField()
+    embedding = ArrayField(models.FloatField(), size=1024)
+
+    class Meta:
+        unique_together=['article', 'chunk_index']
+        indexes = [
+            VectorSearchIndex(name="chunk_search_index", fields=["embedding"], similarities=["cosine"])
+        ]
+
+    def __str__(self):
+        return f'Chunk {self.chunk_index} of {self.article.title}'
