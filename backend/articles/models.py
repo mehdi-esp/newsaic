@@ -58,6 +58,8 @@ class Article(models.Model):
     embedding = ArrayField(models.FloatField(),size=1024, blank=True, null=True)
     tags = EmbeddedModelArrayField(EmbeddedTag, blank=True, default=list)  # Embedded tags
     authors = EmbeddedModelArrayField(EmbeddedContributor, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.web_title
