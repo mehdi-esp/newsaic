@@ -32,14 +32,15 @@ class Gender(models.TextChoices):
 class User(AbstractUser):
     persona = EmbeddedModelField(AuthorPersona, blank=True, null=True)
     preferred_sections = EmbeddedModelArrayField(SectionPreference, blank=True, null=True)
-    birthday = models.DateField()
+    birthday = models.DateField(blank=True, null=True)
     user_type = models.CharField(
         max_length=11,
         choices=UserType.choices
     )
     gender = models.CharField(
         max_length=1,
-        choices=Gender.choices
+        choices=Gender.choices,
+        blank=True, null=True
     )
 
     def __str__(self):
