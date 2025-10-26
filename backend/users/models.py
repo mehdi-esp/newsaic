@@ -3,7 +3,7 @@ from django.conf import settings
 from django_mongodb_backend.fields import EmbeddedModelField, ArrayField, EmbeddedModelArrayField
 from django_mongodb_backend.models import EmbeddedModel
 from django.contrib.auth.models import AbstractUser
-from articles.models import EmbeddedTag, Section
+from articles.models import EmbeddedTag, Section, Article
 
 # Create your models here.
 
@@ -44,3 +44,12 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Bookmark(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'article')
