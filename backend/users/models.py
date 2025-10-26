@@ -21,9 +21,26 @@ class AuthorPersona(EmbeddedModel):
     def __str__(self):
         return f"Persona(tone={self.tone}, style={self.style}, length={self.length})"
 
+class UserType(models.TextChoices):
+    READER = 'news_reader', 'News Reader'
+    ADMIN = 'admin', 'Admin'
+
+class Gender(models.TextChoices):
+    MALE = 'm', 'Male'
+    FEMALE = 'f', 'Female'
+
 class User(AbstractUser):
     persona = EmbeddedModelField(AuthorPersona, blank=True, null=True)
     preferred_sections = EmbeddedModelArrayField(SectionPreference, blank=True, null=True)
+    birthday = models.DateField()
+    user_type = models.CharField(
+        max_length=11,
+        choices=UserType.choices
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=Gender.choices
+    )
 
     def __str__(self):
         return self.username
