@@ -47,7 +47,7 @@ class User(AbstractUser):
 
 
 class Bookmark(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, limit_choices_to={'user_type': UserType.READER}, on_delete=models.CASCADE)
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     saved_at = models.DateTimeField(auto_now_add=True)
 
