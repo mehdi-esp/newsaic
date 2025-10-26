@@ -124,5 +124,10 @@ class Article(models.Model):
 
     class Meta:
         indexes = [
+            models.Index(fields=['section_id']),
+            models.Index(fields=['first_publication_date']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['last_modified']),
             VectorSearchIndex(name="text_search_index", fields=["embedding"], similarities=["cosine"])
         ]
+
