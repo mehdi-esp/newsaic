@@ -12,3 +12,5 @@ ipython
 python-dotenv
 requests
 sqlalchemy
+langchain
+langchain-groq
