@@ -14,3 +14,4 @@ requests
 sqlalchemy
 langchain
 langchain-groq
+django-cors-headers
