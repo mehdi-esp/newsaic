@@ -1,4 +1,6 @@
-from rest_framework import viewsets, generics, permissions
+from rest_framework import views, viewsets, generics, permissions, status
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import User, Bookmark
@@ -26,3 +28,22 @@ class BookmarkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class LoginView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user:
+            django_login(request, user)
+            serializer = UserSerializer(user)
+            return Response({'success': True, 'user': serializer.data})
+        return Response({'success': False, 'detail': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+class LogoutView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request):
+        django_logout(request)
+        return Response({'success': True})

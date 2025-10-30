@@ -41,66 +41,16 @@ const getCSRFToken = () => {
  */
 export const login = async (username, password) => {
   try {
-    // First, get CSRF token by making a GET request to login page
-    const csrfResponse = await apiClient.get('/admin/login/')
-    
-    // Extract CSRF token from the response
-    const csrfToken = csrfResponse.headers['x-csrftoken'] || 
-                     document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-                     getCSRFToken()
-    
-    if (!csrfToken) {
-      throw new Error('Could not obtain CSRF token')
-    }
-    
-    // Now login with the CSRF token
-    const response = await apiClient.post('/admin/login/', {
+
+    const response = await apiClient.post('/login/', {
       username,
-      password,
-      csrfmiddlewaretoken: csrfToken
-    }, {
-      headers: {
-        'X-CSRFToken': csrfToken,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Referer': 'http://localhost:8000/admin/login/'
-      },
-      // Don't follow redirects automatically
-      maxRedirects: 0,
-      validateStatus: function (status) {
-        // Accept both 200 and 302 (redirect) as success
-        return status >= 200 && status < 400
-      }
+      password
     })
-    
-    // If we get a 302 redirect, it means login was successful
-    if (response.status === 302 || response.status === 200) {
-      return {
-        success: true,
-        data: { message: 'Login successful' }
-      }
-    }
-    
     return {
       success: true,
       data: response.data
     }
   } catch (error) {
-    // If it's a 404 or redirect error, check if we're actually logged in
-    if (error.response?.status === 404 || error.response?.status === 302) {
-      // Check if we're actually authenticated by trying to get user profile
-      try {
-        const authCheck = await checkAuth()
-        if (authCheck.isAuthenticated) {
-          return {
-            success: true,
-            data: { message: 'Login successful' }
-          }
-        }
-      } catch (authError) {
-        // If auth check fails, login failed
-      }
-    }
-    
     console.error('Login error:', error)
     return {
       success: false,
@@ -116,17 +66,7 @@ export const login = async (username, password) => {
 export const logout = async () => {
   try {
     const csrfToken = getCSRFToken()
-    
-    if (!csrfToken) {
-      console.warn('No CSRF token found, forcing logout on client side')
-      return {
-        success: true,
-        data: { detail: 'Client-side logout' }
-      }
-    }
-    
-    // Try Django admin logout endpoint first
-    const response = await apiClient.post('/admin/logout/', {}, {
+    const response = await apiClient.post('/logout/', {}, {
       headers: {
         'X-CSRFToken': csrfToken
       }
