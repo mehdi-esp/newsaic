@@ -31,6 +31,7 @@ class Story(models.Model):
     source_articles = models.ManyToManyField(Article)
 
     order = models.PositiveIntegerField()
+    narration = models.FileField(upload_to="story_narrations/", blank=True, null=True)
 
     class Meta:
         ordering = ['order']
