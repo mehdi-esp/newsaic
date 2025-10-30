@@ -9,6 +9,10 @@ class Section(models.Model):
     web_title = models.CharField(max_length=200)
     web_url = models.URLField()
     api_url = models.URLField()
+    class Meta:
+        indexes = [
+            models.Index(fields=['section_id']),
+        ]
 
     def __str__(self):
         return self.web_title
