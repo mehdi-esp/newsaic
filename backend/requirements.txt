@@ -15,3 +15,5 @@ sqlalchemy
 langchain
 langchain-groq
 django-cors-headers
+kokoro
+soundfile
