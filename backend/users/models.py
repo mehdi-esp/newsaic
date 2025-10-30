@@ -46,6 +46,16 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+    def save(self, *args, **kwargs):
+        if self.is_superuser:
+            self.user_type = UserType.ADMIN
+            self.is_staff = True
+        elif self.user_type == UserType.ADMIN:
+            self.is_superuser = True
+            self.is_staff = True
+        super().save(*args, **kwargs)
+
+
 
 class Bookmark(models.Model):
     user = models.ForeignKey(User, limit_choices_to={'user_type': UserType.READER}, on_delete=models.CASCADE)
