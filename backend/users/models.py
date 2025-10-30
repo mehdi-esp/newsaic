@@ -12,6 +12,13 @@ class SectionPreference(EmbeddedModel):
     section_name = models.CharField(max_length=100, blank=True)
     score = models.FloatField(default=0.0)
 
+    @staticmethod
+    def from_section(section: Section):
+        return SectionPreference(
+            section_id=section.section_id,
+            section_name=section.web_title,
+        )
+
 class AuthorPersona(EmbeddedModel):
     tone = models.CharField(max_length=100, blank=True, null=True)
     style = models.CharField(max_length=100, blank=True, null=True)
