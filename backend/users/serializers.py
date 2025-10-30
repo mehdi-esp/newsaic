@@ -1,12 +1,47 @@
 from rest_framework import serializers
-from .models import User, UserType, Bookmark
+from .models import User, UserType, Bookmark, AuthorPersona, SectionPreference
+from articles.models import Section
+
+class AuthorPersonaSerializer(serializers.Serializer):
+    tone = serializers.CharField(required=True)
+    style = serializers.CharField(required=True)
+    length = serializers.CharField(required=True)
+    extra_instructions = serializers.CharField(required=False, allow_null=True)
+
+    def create(self, validated_data):
+        return AuthorPersona(**validated_data)
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        return instance
+
+class SectionPreferenceSerializer(serializers.Serializer):
+    section_id = serializers.CharField(required=True)
+    section_name = serializers.CharField(read_only=True)
+    score = serializers.FloatField(read_only=True)
+
+    def create(self, validated_data):
+        section = Section.objects.get(section_id=validated_data['section_id'])
+        return SectionPreference.from_section(section)
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        return instance
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.CharField(read_only=True)
+    persona = AuthorPersonaSerializer()
+    preferred_sections = SectionPreferenceSerializer(many=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'user_type', 'gender', 'birthday']
-        read_only_fields = ['user_type']
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'email',
+            'user_type', 'gender', 'birthday', 'persona', 'preferred_sections'
+        ]
+        read_only_fields = ['user_type', 'persona', 'preferred_sections']
 
     def validate(self, attrs):
         # Determine the user_type: from incoming data or existing instance
