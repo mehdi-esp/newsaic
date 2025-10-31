@@ -17,3 +17,5 @@ langchain-groq
 django-cors-headers
 kokoro
 soundfile
+langchain-text-splitters
+tiktoken

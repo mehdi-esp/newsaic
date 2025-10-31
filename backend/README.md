@@ -42,7 +42,14 @@ python manage.py runserver
 python manage.py fetch_articles
 ```
 
-**Article Embedding**
+**Article Chunk Embedding (for RAG & Semantic Search)**
+
+
+```bash
+python manage.py embed_article_chunks
+```
+
+**Article Embedding (for recommendations)**
 
 ```bash
 python manage.py embed_articles
