@@ -87,7 +87,7 @@ WSGI_APPLICATION = "newsaic.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django_mongodb_backend",
-        "HOST": os.getenv("MONGODB_URI"),
+        "HOST": os.getenv("MONGODB_URI", "mongodb://localhost:32768/?directConnection=true"),
         "NAME": os.getenv("DB_NAME", "newsaic"),
     },
 }
