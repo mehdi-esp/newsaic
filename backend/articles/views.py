@@ -1,7 +1,7 @@
 from rest_framework import viewsets
-from .models import Article
+from .models import Article, Section
 from users.models import Bookmark, User, UserType
-from .serializers import ArticleSerializer
+from .serializers import ArticleSerializer, SectionSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -49,3 +49,8 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
                 bookmark.delete()
                 return Response({"bookmarked": False, "detail": "Bookmark removed"}, status=status.HTTP_200_OK)
             return Response({"bookmarked": False, "detail": "No bookmark found"}, status=status.HTTP_400_BAD_REQUEST)
+
+class SectionViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = SectionSerializer
+    permission_classes = [AllowAny]
+    queryset = Section.objects.all()
