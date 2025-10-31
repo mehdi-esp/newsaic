@@ -26,6 +26,12 @@ Create a `.env` file and set the following environment variables:
 python manage.py migrate
 ```
 
+### Populate database with The Guardian sections
+
+```bash
+python manage.py fetch_sections
+```
+
 ## Running
 
 ### Run server
