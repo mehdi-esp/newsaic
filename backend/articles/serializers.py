@@ -1,7 +1,14 @@
 from rest_framework import serializers
 import json
 
-from .models import Article
+from .models import Article, Section
+
+
+class SectionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Section
+        fields = "__all__"
+
 
 class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     tags = serializers.SerializerMethodField()
