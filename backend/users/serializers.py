@@ -32,8 +32,8 @@ class SectionPreferenceSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.CharField(read_only=True)
-    persona = AuthorPersonaSerializer()
-    preferred_sections = SectionPreferenceSerializer(many=True)
+    persona = AuthorPersonaSerializer(read_only=True)
+    preferred_sections = SectionPreferenceSerializer(read_only=True, many=True)
 
     class Meta:
         model = User
