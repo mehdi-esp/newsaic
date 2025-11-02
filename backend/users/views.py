@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import User, Bookmark
-from .serializers import UserSerializer, BookmarkSerializer
+from .serializers import UserSerializer, BookmarkSerializer, AuthorPersonaSerializer, ReaderSectionPreferencesSerializer
 from .permissions import IsNewsReader, IsAdmin
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -15,6 +15,28 @@ class UserViewSet(viewsets.ModelViewSet):
 class MyProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+class MyPersonaView(generics.RetrieveUpdateAPIView):
+    serializer_class = AuthorPersonaSerializer
+    permission_classes = [permissions.IsAuthenticated, IsNewsReader]
+
+    def get_object(self):
+        user: User = self.request.user
+        return user.persona
+
+    def perform_update(self, serializer):
+        user: User = self.request.user
+        user.persona = serializer.save()
+        user.save()
+
+class MySectionPreferencesView(generics.RetrieveUpdateAPIView):
+    serializer_class = ReaderSectionPreferencesSerializer
+    permission_classes = [permissions.IsAuthenticated, IsNewsReader]
+
+    queryset = User.objects.all()
 
     def get_object(self):
         return self.request.user
