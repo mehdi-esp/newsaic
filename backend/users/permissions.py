@@ -10,6 +10,14 @@ class IsAdmin(BasePermission):
         return request.user.user_type == UserType.ADMIN
 
 
+
+class IsAnonymous(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        return request.user.is_anonymous
+
+
 class BookmarkPermission(BasePermission):
     """
     News readers can create/delete bookmarks.
