@@ -149,4 +149,4 @@ class Chunk(models.Model):
         ]
 
     def __str__(self):
-        return f'Chunk {self.chunk_index} of {self.article.title}'
+        return f'Chunk {self.chunk_index} of {self.article.web_title}'
