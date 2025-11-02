@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import User, UserType, Bookmark, AuthorPersona, SectionPreference
 from articles.models import Section
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 class AuthorPersonaSerializer(serializers.Serializer):
     tone = serializers.CharField(required=True, allow_blank=False)
@@ -154,6 +156,58 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
         return attrs
 
+class ReaderRegisterSerializer(serializers.ModelSerializer):
+    persona = AuthorPersonaSerializer(required=True)
+
+    preferred_sections = SectionPreferenceSerializer(many=True, required=True)
+
+    password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'password',
+            'first_name', 'last_name',
+            'gender', 'birthday',
+            'persona',
+            'preferred_sections'
+        ]
+        extra_kwargs = {
+            'username':   {'required': True, 'allow_blank': False},
+            'first_name': {'required': True, 'allow_blank': False},
+            'last_name':  {'required': True, 'allow_blank': False},
+
+            'gender':     {'required': True, 'allow_null': False},
+            'birthday':   {'required': True, 'allow_null': False},
+        }
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages))
+        return value
+
+    def create(self, validated_data):
+
+        persona_data = validated_data.pop('persona')
+        sections_data = validated_data.pop('preferred_sections')
+        password = validated_data.pop('password')
+
+        sections_objects = self.fields['preferred_sections'].create(sections_data)
+
+        user = User(
+            user_type='news_reader',
+            persona=AuthorPersona(**persona_data),
+            preferred_sections=sections_objects,
+            **validated_data
+        )
+
+        user.set_password(password)
+
+        user.save()
+
+        return user
 
 class BookmarkSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

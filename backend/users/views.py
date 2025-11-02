@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import User, Bookmark
-from .serializers import UserSerializer, BookmarkSerializer, AuthorPersonaSerializer, ReaderSectionPreferencesSerializer
-from .permissions import IsNewsReader, IsAdmin
+from .serializers import UserSerializer, BookmarkSerializer, AuthorPersonaSerializer, ReaderSectionPreferencesSerializer, ReaderRegisterSerializer
+from .permissions import IsNewsReader, IsAdmin, IsAnonymous
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
@@ -50,6 +50,10 @@ class BookmarkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class ReaderRegisterView(generics.CreateAPIView):
+    serializer_class = ReaderRegisterSerializer
+    permission_classes = [IsAnonymous]
 
 class LoginView(views.APIView):
     permission_classes = [permissions.AllowAny]
