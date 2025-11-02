@@ -86,6 +86,8 @@ class Command(BaseCommand):
             tqdm.write("No articles found to process. Exiting.")
             return
 
+        articles_list = list(articles_qs)
+
         tqdm.write(
             f"Processing {total_articles} articles for chunk embedding "
             f"(batch size: {batch_size}, force={reembed})"
@@ -99,7 +101,7 @@ class Command(BaseCommand):
             end = start + batch_size
             end = min(end, total_articles)
 
-            articles_batch = list(articles_qs[start:end])
+            articles_batch = articles_list[start:end]
 
             if reembed:
                 Chunk.objects.filter(article__in=articles_batch).delete()
