@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from .models import Article, Section
+from .models import Article, Section, Chunk
 from users.models import Bookmark, User, UserType
 from .serializers import ArticleSerializer, SectionSerializer
 from rest_framework.permissions import AllowAny
@@ -7,13 +7,43 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from users.permissions import BookmarkPermission
+from django_mongodb_backend.expressions import SearchVector
+import ollama
 
+EMBEDDING_MODEL = "qwen3-embedding:0.6B"
 
 class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ArticleSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
+
+        if query := self.request.query_params.get('q'):
+            embedded_query = ollama.embed(EMBEDDING_MODEL, [query])["embeddings"][0]
+
+            results = Chunk.objects.annotate(
+                score=SearchVector(
+                    path="embedding",
+                    query_vector=embedded_query,
+                    limit=20,
+                    num_candidates=150,
+                )
+            ).order_by("-score").only("article_id") # This is the default behavior.
+
+            # Keep first (highest scored) chunk per article
+            seen_article_ids = set()
+            sorted_article_ids = []
+            for article_id, score in results.values_list("article_id", "score"):
+                if article_id not in seen_article_ids:
+                    seen_article_ids.add(article_id)
+                    sorted_article_ids.append(article_id)
+
+            articles_dict = Article.objects.in_bulk(sorted_article_ids)
+
+            ranked_articles = [articles_dict[a_id] for a_id in sorted_article_ids if a_id in articles_dict]
+
+            return ranked_articles
+
         if self.request.user.is_authenticated:
             user: User = self.request.user
             if user.user_type == UserType.ADMIN:
