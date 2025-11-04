@@ -13,7 +13,7 @@ Make sure the following steps have been completed in order:
 from datetime import date
 from users.models import User, SectionPreference, AuthorPersona
 
-User.objects.create(
+User.objects.create_user(
     username="demo_newsreader",
     first_name="Jane",
     last_name="Doe",
