@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { login } from '../services/authService'
 
 const Login = ({ onLoginSuccess }) => {
@@ -123,17 +124,12 @@ const Login = ({ onLoginSuccess }) => {
             <p className="text-xs text-gray-500 text-center mb-2">
               Don't have an account?
             </p>
-            <p className="text-xs text-gray-600 text-center">
-              Contact your administrator or create one in the{' '}
-              <a
-                href="http://localhost:8000/admin/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Django admin panel
-              </a>
-            </p>
+            <Link
+              to="/register"
+              className="block text-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Create an account
+            </Link>
           </div>
 
           <div className="pt-2">

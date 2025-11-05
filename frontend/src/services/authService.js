@@ -126,6 +126,62 @@ export const getCurrentUser = async () => {
 }
 
 /**
+ * Register a new user
+ * @param {Object} userData - User registration data
+ * @returns {Promise<Object>} Registration response
+ */
+export const register = async (userData) => {
+  try {
+    const csrfToken = getCSRFToken()
+    
+    const response = await apiClient.post('/register/', userData, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    
+    return {
+      success: true,
+      data: response.data
+    }
+  } catch (error) {
+    console.error('Registration error:', error)
+    return {
+      success: false,
+      error: error.response?.data || error.message || 'Registration failed'
+    }
+  }
+}
+
+/**
+ * Update user profile
+ * @param {Object} userData - User data to update
+ * @returns {Promise<Object>} Update response
+ */
+export const updateProfile = async (userData) => {
+  try {
+    const csrfToken = getCSRFToken()
+    
+    const response = await apiClient.patch('/me/', userData, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    
+    return {
+      success: true,
+      user: response.data
+    }
+  } catch (error) {
+    console.error('Update profile error:', error)
+    return {
+      success: false,
+      error: error.response?.data || error.message || 'Failed to update profile'
+    }
+  }
+}
+
+/**
  * Bookmark an article
  * @param {string} articleId - Article ID
  * @returns {Promise<Object>} Bookmark response

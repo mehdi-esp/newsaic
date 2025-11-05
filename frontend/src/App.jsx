@@ -6,6 +6,8 @@ import CategoryFilter from './components/CategoryFilter'
 import FeedSelector from './components/FeedSelector'
 import HomePage from './components/HomePage'
 import ProtectedRoute from './components/ProtectedRoute'
+import Register from './components/Register'
+import Settings from './components/Settings'
 import { getNews, searchNews } from './services/newsService'
 import { checkAuth, logout } from './services/authService'
 import './App.css'
@@ -316,6 +318,30 @@ function App() {
                   <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Bookmarks</h1>
                   <p className="text-gray-600">Bookmarked articles will appear here.</p>
                 </div>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              <Register onRegisterSuccess={handleLoginSuccess} />
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute 
+                isAuthenticated={isAuthenticated}
+                isLoading={authLoading || loginLoading}
+                onLoginSuccess={handleLoginSuccess}
+              >
+                <Settings 
+                  user={user} 
+                  onUpdate={(updatedUser) => {
+                    setUser(updatedUser)
+                    checkAuthentication()
+                  }} 
+                />
               </ProtectedRoute>
             } 
           />

@@ -33,6 +33,12 @@ function Navbar({ onSearch, userInterests, onInterestsChange, user, onLogout }) 
                 >
                   Bookmarks
                 </Link>
+                <Link
+                  to="/settings"
+                  className="px-3 py-1 text-sm text-gray-600 hover:text-indigo-600 transition-colors"
+                >
+                  Settings
+                </Link>
                 <span className="text-sm text-gray-600">
                   {user.username || user.first_name || 'User'}
                 </span>
@@ -96,6 +102,13 @@ function Navbar({ onSearch, userInterests, onInterestsChange, user, onLogout }) 
                   onClick={() => setIsOpen(false)}
                 >
                   Bookmarks
+                </Link>
+                <Link
+                  to="/settings"
+                  className="block px-3 py-2 text-sm text-gray-600 hover:text-indigo-600"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Settings
                 </Link>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">
