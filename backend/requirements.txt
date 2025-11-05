@@ -22,5 +22,5 @@ tiktoken
 kokoro
 soundfile
 torch
-numpy
+numpy<2.0
 celery

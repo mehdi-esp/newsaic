@@ -236,12 +236,16 @@ def get_rewriter_prompt(
             "Highlight the most relevant and important information from each article.",
         )
 
+    # Store the join string outside the f-string to avoid backslash issue
+    guidelines_separator = "\n- "
+    guidelines_text = guidelines_separator.join(guidelines)
+
     user_prompt = f"""
 Write a single, polished, readable news article based on the following story idea. The story will have a title and a body. 
 Use the story idea to guide the article, but do not treat the suggested title as mandatory — it is just a guide.
 
 **Guidelines:**
-- {"\n- ".join(guidelines)}
+- {guidelines_text}
 
 Story Idea:
 - Suggested Title: {story_idea.suggested_title}
