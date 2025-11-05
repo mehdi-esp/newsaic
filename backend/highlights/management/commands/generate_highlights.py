@@ -9,6 +9,11 @@ from typing import Type
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 from django.db import transaction
+from kokoro import KPipeline
+import soundfile as sf
+import numpy as np
+import io
+from django.core.files.base import ContentFile
 
 
 class StoryIdea(BaseModel):
@@ -264,16 +269,21 @@ def rewrite_story(
 
 
 class Command(BaseCommand):
-    help = "Generate story ideas for news readers based on today's articles."
+    help = "Generate story ideas, rewrite them, and add TTS narrations for news readers based on today's articles."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--user_id",
             type=str,
-            help="Optional MongoDB user ID to generate story ideas for. If not provided, all news readers are processed.",
+            help="Optional MongoDB user ID to generate for. If not provided, all news readers are processed.",
         )
+        parser.add_argument('--voice', type=str, default='af_heart', help='Kokoro voice to use (default: af_heart)')
+        parser.add_argument('--dry-run', action='store_true', help='Preview without generating/saving audio')
+        parser.add_argument('--no-narrate', action='store_true', help='Skip narration generation (default: narrate)')
 
     def handle(self, *args, **options):
+        dry_run = options['dry_run']
+        voice = options['voice']
         user_id = options.get("user_id")
 
         if user_id:
@@ -290,6 +300,12 @@ class Command(BaseCommand):
             users = [user]
         else:
             users = User.objects.filter(user_type=UserType.READER)
+
+        if dry_run:
+            self.stdout.write("Dry run mode: Generating highlights but previewing narrations without saving.")
+
+        if not dry_run:
+            pipeline = KPipeline(lang_code='a')  # Initialize TTS pipeline only if not dry run
 
         for user in users:
             candidate_articles = get_articles_for_user(user)
@@ -329,19 +345,19 @@ class Command(BaseCommand):
                     user=user, persona_snapshot=user.persona
                 )
 
-                for order_index, story in enumerate(
+                for order_index, story_idea in enumerate(
                     story_ideas_response.stories, start=1
                 ):
                     self.stdout.write(
-                        f"\n[Story Idea #{order_index}] {story.suggested_title}:"
+                        f"\n[Story Idea #{order_index}] {story_idea.suggested_title}:"
                     )
-                    self.stdout.write(f"  Idea: {story.idea}")
-                    self.stdout.write(f"  Source Articles: {story.source_articles}")
+                    self.stdout.write(f"  Idea: {story_idea.idea}")
+                    self.stdout.write(f"  Source Articles: {story_idea.source_articles}")
 
                     source_articles_objs = [
                         a
                         for a in candidate_articles
-                        if a.guardian_id in story.source_articles
+                        if a.guardian_id in story_idea.source_articles
                     ]
 
                     if not source_articles_objs:
@@ -352,7 +368,7 @@ class Command(BaseCommand):
 
                     try:
                         rewritten_story = rewrite_story(
-                            user, story, source_articles_objs, llm_rewriter
+                            user, story_idea, source_articles_objs, llm_rewriter
                         )
                     except Exception as e:
                         self.stderr.write(
@@ -369,3 +385,21 @@ class Command(BaseCommand):
                     story_record.source_articles.set(source_articles_objs)
 
                     self.stdout.write(f"  Stored story in DB: {story_record}")
+
+                    # Generate narration for the newly created story
+                    if dry_run:
+                        self.stdout.write(f"  Would generate narration for story {story_record.id} with voice {voice}.")
+                        continue
+
+                    generator = pipeline(story_record.body_text, voice=voice)
+                    audio_array = np.concatenate([audio for _, _, audio in generator])
+
+                    buffer = io.BytesIO()
+                    sf.write(buffer, audio_array, samplerate=24000, format="WAV")
+                    buffer.seek(0)
+
+                    audio_file = ContentFile(buffer.read(), name=f"{story_record.id}_narration.wav")
+                    story_record.narration = audio_file
+                    story_record.save()
+
+                    self.stdout.write(self.style.SUCCESS(f"  Narration saved for story {story_record.id}"))

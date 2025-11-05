@@ -19,3 +19,8 @@ kokoro
 soundfile
 langchain-text-splitters
 tiktoken
+kokoro
+soundfile
+torch
+numpy
+celery
