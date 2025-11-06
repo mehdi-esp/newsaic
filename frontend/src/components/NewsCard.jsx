@@ -62,7 +62,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
   // Get author names
   const getAuthorNames = () => {
     if (!article.authors || article.authors.length === 0) return 'Guardian Staff'
-    return article.authors.map(author => author.webTitle || `${author.firstName} ${author.lastName}`).join(', ')
+    return article.authors.join(', ')
   }
 
   const BookmarkButton = ({ compact = false }) => {
