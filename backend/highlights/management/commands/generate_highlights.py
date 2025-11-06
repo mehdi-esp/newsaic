@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from typing import Type
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
-from django.db import transaction
+from django_mongodb_backend import transaction
 from kokoro import KPipeline
 import soundfile as sf
 import numpy as np
