@@ -183,14 +183,14 @@ export const updateProfile = async (userData) => {
 
 /**
  * Bookmark an article
- * @param {string} articleId - Article ID
+ * @param {string} url - Article url
  * @returns {Promise<Object>} Bookmark response
  */
-export const bookmarkArticle = async (articleId) => {
+export const bookmarkArticle = async (url) => {
   try {
     const csrfToken = await getCSRFToken()
     
-    const response = await apiClient.post(`/articles/${articleId}/bookmark/`, {}, {
+    const response = await apiClient.post(`${url}bookmark/`, {}, {
       headers: {
         'X-CSRFToken': csrfToken
       }
@@ -211,14 +211,14 @@ export const bookmarkArticle = async (articleId) => {
 
 /**
  * Remove bookmark from an article
- * @param {string} articleId - Article ID
+ * @param {string} url - Article url
  * @returns {Promise<Object>} Unbookmark response
  */
-export const unbookmarkArticle = async (articleId) => {
+export const unbookmarkArticle = async (url) => {
   try {
     const csrfToken = await getCSRFToken()
     
-    const response = await apiClient.delete(`/articles/${articleId}/bookmark/`, {
+    const response = await apiClient.delete(`${url}bookmark/`, {
       headers: {
         'X-CSRFToken': csrfToken
       }
@@ -239,12 +239,12 @@ export const unbookmarkArticle = async (articleId) => {
 
 /**
  * Check if article is bookmarked
- * @param {string} articleId - Article ID
+ * @param {string} url - Article url
  * @returns {Promise<Object>} Bookmark status
  */
-export const checkBookmark = async (articleId) => {
+export const checkBookmark = async (url) => {
   try {
-    const response = await apiClient.get(`/articles/${articleId}/bookmark/`)
+    const response = await apiClient.get(`${url}bookmark/`)
     return {
       success: true,
       bookmarked: response.data.bookmarked

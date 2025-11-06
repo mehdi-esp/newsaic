@@ -15,7 +15,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
     if (!article.guardian_id) return
     setIsCheckingBookmark(true)
     try {
-      const result = await checkBookmark(article.guardian_id)
+      const result = await checkBookmark(article.url)
       if (result.success) {
         setIsBookmarked(result.bookmarked)
       }
@@ -32,12 +32,12 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
 
     try {
       if (isBookmarked) {
-        const result = await unbookmarkArticle(article.guardian_id)
+        const result = await unbookmarkArticle(article.url)
         if (result.success) {
           setIsBookmarked(false)
         }
       } else {
-        const result = await bookmarkArticle(article.guardian_id)
+        const result = await bookmarkArticle(article.url)
         if (result.success) {
           setIsBookmarked(true)
         }
