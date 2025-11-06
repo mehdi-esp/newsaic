@@ -50,6 +50,11 @@ class User(AbstractUser):
         blank=True, null=True
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user_type'])
+        ]
+
     def __str__(self):
         return self.username
 
