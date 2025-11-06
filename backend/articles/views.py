@@ -47,12 +47,12 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
         if self.request.user.is_authenticated:
             user: User = self.request.user
             if user.user_type == UserType.ADMIN:
-                return Article.objects.all()
+                return Article.objects.all().order_by("-first_publication_date")
 
             section_ids = [s.section_id for s in user.preferred_sections]
-            return Article.objects.filter(section_id__in=section_ids)
+            return Article.objects.filter(section_id__in=section_ids).order_by("-first_publication_date")
 
-        return Article.objects.all()
+        return Article.objects.all().order_by("-first_publication_date")
 
     @action(detail=True, methods=["get"])
     def recommended_articles(self, request, pk=None):
