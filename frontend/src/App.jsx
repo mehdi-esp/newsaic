@@ -8,6 +8,7 @@ import HomePage from './components/HomePage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './components/Register'
 import Settings from './components/Settings'
+import Highlights from './components/Highlights'
 import { getNews, searchNews } from './services/newsService'
 import { checkAuth, logout } from './services/authService'
 import './App.css'
@@ -342,6 +343,18 @@ function App() {
                     checkAuthentication()
                   }} 
                 />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/highlights" 
+            element={
+              <ProtectedRoute 
+                isAuthenticated={isAuthenticated}
+                isLoading={authLoading || loginLoading}
+                onLoginSuccess={handleLoginSuccess}
+              >
+                <Highlights />
               </ProtectedRoute>
             } 
           />
