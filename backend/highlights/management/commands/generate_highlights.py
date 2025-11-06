@@ -276,10 +276,16 @@ class Command(BaseCommand):
     help = "Generate story ideas, rewrite them, and add TTS narrations for news readers based on today's articles."
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
             "--user_id",
             type=str,
             help="Generate highlights for a specific user ID.",
+        )
+        group.add_argument(
+            "--username",
+            type=str,
+            help="Generate highlights for a specific username.",
         )
         parser.add_argument('--voice', type=str, default='af_heart', help='Kokoro voice to use (default: af_heart)')
         parser.add_argument('--dry-run', action='store_true', help='Preview without generating/saving audio')
@@ -289,19 +295,23 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         voice = options['voice']
         user_id = options.get("user_id")
+        username = options.get("username")
 
-        if user_id:
+        if user_id or username:
+            lookup = {"id": user_id} if user_id else {"username": username}
+            identifier = f"id={user_id}" if user_id else f"username='{username}'"
+
             try:
-                user = User.objects.get(id=user_id)
+                specific_user = User.objects.get(
+                    **lookup,
+                    user_type=UserType.READER
+                )
             except User.DoesNotExist:
-                self.stderr.write(f"No user found with ID {user_id}")
+                self.stderr.write(f"No news reader found with {identifier}.")
                 return
 
-            if user.user_type != UserType.READER:
-                self.stderr.write(f"User {user_id} is not a news reader")
-                return
+            users = [specific_user]
 
-            users = [user]
         else:
             users = User.objects.filter(user_type=UserType.READER)
 
