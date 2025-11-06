@@ -279,7 +279,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--user_id",
             type=str,
-            help="Optional MongoDB user ID to generate for. If not provided, all news readers are processed.",
+            help="Generate highlights for a specific user ID.",
         )
         parser.add_argument('--voice', type=str, default='af_heart', help='Kokoro voice to use (default: af_heart)')
         parser.add_argument('--dry-run', action='store_true', help='Preview without generating/saving audio')
