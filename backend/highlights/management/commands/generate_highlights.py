@@ -288,14 +288,13 @@ class Command(BaseCommand):
             help="Generate highlights for a specific username.",
         )
         parser.add_argument('--voice', type=str, default='af_heart', help='Kokoro voice to use (default: af_heart)')
-        parser.add_argument('--dry-run', action='store_true', help='Preview without generating/saving audio')
         parser.add_argument('--no-narrate', action='store_true', help='Skip narration generation (default: narrate)')
 
     def handle(self, *args, **options):
-        dry_run = options['dry_run']
         voice = options['voice']
         user_id = options.get("user_id")
         username = options.get("username")
+        narrate = not options.get("no_narrate")
 
         if user_id or username:
             lookup = {"id": user_id} if user_id else {"username": username}
@@ -315,21 +314,19 @@ class Command(BaseCommand):
         else:
             users = User.objects.filter(user_type=UserType.READER)
 
-        if dry_run:
-            self.stdout.write("Dry run mode: Generating highlights but previewing narrations without saving.")
-
-        if not dry_run:
-            pipeline = KPipeline(lang_code='a')  # Initialize TTS pipeline only if not dry run
+        pipeline = None
+        if narrate:
+            pipeline = KPipeline(lang_code='a')
 
         for user in users:
             candidate_articles = get_articles_for_user(user)
 
             if not candidate_articles:
-                self.stdout.write(f"No articles for user {user.id} ({user}) today")
+                self.stdout.write(f"No articles for user {user.username} ({user.id}) today")
                 continue
 
             self.stdout.write(
-                f"Selected {len(candidate_articles)} articles for user {user.id} ({user}) today"
+                f"Selected {len(candidate_articles)} articles for user {user.username} ({user.id}) today"
             )
 
             llm_idea_generator = get_llm(
@@ -342,78 +339,98 @@ class Command(BaseCommand):
                 )
             except Exception as e:
                 self.stderr.write(
-                    f"[ERROR] Failed to generate story ideas for user {user.id}: {e}"
+                    f"[ERROR] Failed to generate story ideas for user {user.username}: {e}"
                 )
                 continue
 
             self.stdout.write(
-                f"Generated {len(story_ideas_response.stories)} story ideas for user {user.id}"
+                f"\nGenerated {len(story_ideas_response.stories)} story ideas for user {user.username}"
             )
 
             llm_rewriter = get_llm(
                 "moonshotai/kimi-k2-instruct-0905", structured_class=GeneratedStory
             )
 
-            with transaction.atomic():
-                daily_highlight = DailyHighlight.objects.create(
-                    user=user, persona_snapshot=user.persona
-                )
-
-                for order_index, story_idea in enumerate(
-                    story_ideas_response.stories, start=1
-                ):
-                    self.stdout.write(
-                        f"\n[Story Idea #{order_index}] {story_idea.suggested_title}:"
+            try:
+                with transaction.atomic():
+                    daily_highlight = DailyHighlight.objects.create(
+                        user=user, persona_snapshot=user.persona
                     )
-                    self.stdout.write(f"  Idea: {story_idea.idea}")
-                    self.stdout.write(f"  Source Articles: {story_idea.source_articles}")
 
-                    source_articles_objs = [
-                        a
-                        for a in candidate_articles
-                        if a.guardian_id in story_idea.source_articles
-                    ]
-
-                    if not source_articles_objs:
+                    for order_index, story_idea in enumerate(
+                        story_ideas_response.stories, start=1
+                    ):
                         self.stdout.write(
-                            "  No source articles found, skipping rewrite."
+                            f"\n[Story Idea #{order_index}] {story_idea.suggested_title}:"
                         )
-                        continue
+                        self.stdout.write(f"  Idea: {story_idea.idea}")
+                        self.stdout.write(f"  Source Articles: {story_idea.source_articles}")
 
-                    try:
-                        rewritten_story = rewrite_story(
-                            user, story_idea, source_articles_objs, llm_rewriter
+                        source_articles_objs = [
+                            a
+                            for a in candidate_articles
+                            if a.guardian_id in story_idea.source_articles
+                        ]
+
+                        if not source_articles_objs:
+                            self.stdout.write(
+                                "  No source articles found, skipping rewrite."
+                            )
+                            continue
+
+                        try:
+                            rewritten_story = rewrite_story(
+                                user, story_idea, source_articles_objs, llm_rewriter
+                            )
+                        except Exception as e:
+                            self.stderr.write(
+                                f"[ERROR] Failed to rewrite story #{order_index} for user {user.username}: {e}"
+                            )
+                            continue
+
+                        story = Story.objects.create(
+                            daily_highlight=daily_highlight,
+                            title=rewritten_story.rewritten_title,
+                            body_text=rewritten_story.rewritten_body,
+                            order=order_index,
                         )
-                    except Exception as e:
-                        self.stderr.write(
-                            f"[ERROR] Failed to rewrite story #{order_index} for user {user.id}: {e}"
-                        )
-                        continue
+                        story.source_articles.set(source_articles_objs)
 
-                    story_record = Story.objects.create(
-                        daily_highlight=daily_highlight,
-                        title=rewritten_story.rewritten_title,
-                        body_text=rewritten_story.rewritten_body,
-                        order=order_index,
-                    )
-                    story_record.source_articles.set(source_articles_objs)
+                        self.stdout.write(f"  Created story (pending commit): {story}")
 
-                    self.stdout.write(f"  Stored story in DB: {story_record}")
+                    # If no stories were successfully created, roll back the whole DailyHighlight
+                    if daily_highlight.stories.count() < 1:
+                        raise ValueError("Not enough stories were successfully created")
+            except Exception as e:
+                self.stderr.write(self.style.ERROR(f"{e}"))
+                return
 
-                    # Generate narration for the newly created story
-                    if dry_run:
-                        self.stdout.write(f"  Would generate narration for story {story_record.id} with voice {voice}.")
-                        continue
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"\nDailyHighlight [{daily_highlight.id}] for user {user.username} successfully saved with "
+                    f"{daily_highlight.stories.count()} stories."
+                )
+            )
 
-                    generator = pipeline(story_record.body_text, voice=voice)
+
+            # Generate narration for the newly created story
+            if not narrate:
+                self.stdout.write("\nSkipping narrations.")
+            else:
+                self.stdout.write("\nGenerating narrations...")
+                stories: list[Story] = list(daily_highlight.stories.all())
+                for story in stories:
+                    pipeline: KPipeline
+                    generator = pipeline(story.body_text, voice=voice)
                     audio_array = np.concatenate([audio for _, _, audio in generator])
 
                     buffer = io.BytesIO()
                     sf.write(buffer, audio_array, samplerate=24000, format="WAV")
                     buffer.seek(0)
 
-                    audio_file = ContentFile(buffer.read(), name=f"{story_record.id}_narration.wav")
-                    story_record.narration = audio_file
-                    story_record.save()
+                    audio_file = ContentFile(buffer.read(), name=f"{story.id}_narration.wav")
+                    story.narration = audio_file
 
-                    self.stdout.write(self.style.SUCCESS(f"  Narration saved for story {story_record.id}"))
+                    story.save(update_fields=["narration"])
+
+                    self.stdout.write(self.style.SUCCESS(f"  Narration saved for story [#{story.order}] {story.title}"))
