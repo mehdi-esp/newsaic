@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
 import { getDailyHighlights } from '../services/highlightsService'
 import AudioPlayer from './AudioPlayer'
 
 const Highlights = () => {
-  const [stories, setStories] = useState([])
+  const [searchParams] = useSearchParams()
+  const [allStories, setAllStories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Get story ID from query parameter
+  const storyParam = searchParams.get('story')
 
   useEffect(() => {
     loadHighlights()
@@ -19,7 +24,7 @@ const Highlights = () => {
       const result = await getDailyHighlights()
       
       if (result.success) {
-        setStories(result.stories)
+        setAllStories(result.stories)
       } else {
         setError(result.error || 'Failed to load highlights')
       }
@@ -29,6 +34,39 @@ const Highlights = () => {
       setIsLoading(false)
     }
   }
+
+  // Filter stories based on query parameter
+  const getFilteredStories = () => {
+    if (!storyParam) {
+      return allStories
+    }
+
+    // Try to find story by URL (decoded) or ID
+    const decodedParam = decodeURIComponent(storyParam)
+    const filtered = allStories.filter(story => {
+      // Match by URL (exact or contains)
+      if (story.url && (story.url === decodedParam || story.url.includes(decodedParam))) {
+        return true
+      }
+      // Match by ID
+      if (story.id && story.id.toString() === decodedParam) {
+        return true
+      }
+      // Match by extracting ID from URL
+      if (story.url) {
+        const urlId = story.url.match(/\/(\d+)\/?$/)
+        if (urlId && urlId[1] === decodedParam) {
+          return true
+        }
+      }
+      return false
+    })
+
+    return filtered
+  }
+
+  const stories = getFilteredStories()
+  const isSingleStoryView = storyParam !== null
 
   const getFullAudioUrl = (narrationUrl) => {
     if (!narrationUrl) return null
@@ -91,12 +129,61 @@ const Highlights = () => {
     )
   }
 
+  // Show error if story param exists but story not found
+  if (isSingleStoryView && !isLoading && stories.length === 0 && allStories.length > 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <Link 
+              to="/highlights" 
+              className="inline-flex items-center text-indigo-600 hover:text-indigo-800 mb-4"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to all highlights
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Story Not Found</h1>
+            <p className="text-gray-600">The requested story could not be found.</p>
+          </div>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <p className="text-red-700">The story you're looking for doesn't exist or has been removed.</p>
+            <Link 
+              to="/highlights"
+              className="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              View All Highlights
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Daily Highlights</h1>
-          <p className="text-gray-600">Personalized news stories with audio narration</p>
+          {isSingleStoryView && (
+            <Link 
+              to="/highlights" 
+              className="inline-flex items-center text-indigo-600 hover:text-indigo-800 mb-4"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to all highlights
+            </Link>
+          )}
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {isSingleStoryView ? 'Highlight Story' : 'Your Daily Highlights'}
+          </h1>
+          <p className="text-gray-600">
+            {isSingleStoryView 
+              ? 'Personalized news story with audio narration' 
+              : 'Personalized news stories with audio narration'}
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -136,20 +223,61 @@ const Highlights = () => {
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <h3 className="text-sm font-semibold text-gray-700 mb-2">Source Articles</h3>
                     <div className="flex flex-wrap gap-2">
-                      {story.source_articles.map((article, articleIndex) => (
-                        <a
-                          key={article.url || articleIndex}
-                          href={article.web_url || article.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                        >
-                          {article.web_title || article.title || 'View Article'}
-                          <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      ))}
+                      {story.source_articles.map((article, articleIndex) => {
+                        // Get article URL - check web_url first, then url, then construct from ID
+                        const getArticleUrl = () => {
+                          if (article.web_url) return article.web_url
+                          if (article.url && (article.url.startsWith('http://') || article.url.startsWith('https://'))) {
+                            return article.url
+                          }
+                          // If url is a relative path, try to construct full URL
+                          if (article.url) {
+                            // Extract article ID from URL if it's a hyperlink
+                            const match = article.url.match(/\/(\d+)\/?$/)
+                            if (match) {
+                              // This is a DRF hyperlink, we need the actual web_url
+                              // For now, return null and handle gracefully
+                              return null
+                            }
+                            return article.url
+                          }
+                          return null
+                        }
+                        
+                        const articleUrl = getArticleUrl()
+                        const articleTitle = article.web_title || article.title || 'View Article'
+                        
+                        if (!articleUrl) {
+                          return (
+                            <span
+                              key={article.url || article.id || articleIndex}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
+                              title="Article URL not available"
+                            >
+                              {articleTitle}
+                            </span>
+                          )
+                        }
+                        
+                        return (
+                          <a
+                            key={article.url || article.id || articleIndex}
+                            href={articleUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                            onClick={(e) => {
+                              // Ensure link opens in new tab
+                              e.stopPropagation()
+                            }}
+                          >
+                            {articleTitle}
+                            <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        )
+                      })}
                     </div>
                   </div>
                 )}

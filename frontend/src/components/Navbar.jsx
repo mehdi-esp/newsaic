@@ -8,7 +8,7 @@ function Navbar({ onSearch, userInterests, onInterestsChange, user, onLogout }) 
   const location = useLocation()
 
   return (
-    <nav className="bg-white shadow-md py-4">
+    <nav className="bg-white shadow-md py-4 relative z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           <Link 

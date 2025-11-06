@@ -258,4 +258,27 @@ export const checkBookmark = async (articleId) => {
   }
 }
 
+/**
+ * Get all bookmarks for the current user
+ * @returns {Promise<Object>} Bookmarks response with bookmarks array
+ */
+export const getBookmarks = async () => {
+  try {
+    const response = await apiClient.get('/bookmarks/')
+    // Handle paginated response from DRF - extract results array
+    const bookmarks = response.data.results || response.data || []
+    return {
+      success: true,
+      bookmarks: bookmarks
+    }
+  } catch (error) {
+    console.error('Error fetching bookmarks:', error)
+    return {
+      success: false,
+      error: error.response?.data?.detail || error.message || 'Failed to fetch bookmarks',
+      bookmarks: []
+    }
+  }
+}
+
 export default apiClient

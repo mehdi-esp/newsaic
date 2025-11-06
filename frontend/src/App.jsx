@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Register from './components/Register'
 import Settings from './components/Settings'
 import Highlights from './components/Highlights'
+import Bookmarks from './components/Bookmarks'
 import { getNews, searchNews } from './services/newsService'
 import { checkAuth, logout } from './services/authService'
 import './App.css'
@@ -247,6 +248,7 @@ function App() {
                     articles={filteredArticles}
                     loading={loading}
                     feedType={selectedFeed}
+                    isAuthenticated={isAuthenticated}
                   />
                 </div>
               </div>
@@ -276,6 +278,7 @@ function App() {
                     articles={filteredArticles}
                     loading={loading}
                     feedType="general"
+                    isAuthenticated={isAuthenticated}
                   />
                 </div>
               </div>
@@ -302,6 +305,7 @@ function App() {
                     articles={filteredArticles}
                     loading={loading}
                     feedType="foryou"
+                    isAuthenticated={isAuthenticated}
                   />
                 </div>
               </ProtectedRoute>
@@ -315,10 +319,7 @@ function App() {
                 isLoading={authLoading || loginLoading}
                 onLoginSuccess={handleLoginSuccess}
               >
-                <div className="container mx-auto px-4 py-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Bookmarks</h1>
-                  <p className="text-gray-600">Bookmarked articles will appear here.</p>
-                </div>
+                <Bookmarks />
               </ProtectedRoute>
             } 
           />
