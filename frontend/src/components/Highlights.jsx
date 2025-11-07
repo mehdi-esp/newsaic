@@ -80,6 +80,16 @@ const Highlights = () => {
     return `http://localhost:8000${narrationUrl}`
   }
 
+  // Get thumbnail from source articles (deterministic - uses first available)
+  const getThumbnailFromSource = (story) => {
+    if (!story.source_articles || story.source_articles.length === 0) return null
+    // Find first article with a thumbnail
+    const articleWithThumbnail = story.source_articles.find(
+      article => article.thumbnail && article.thumbnail.trim() !== ''
+    )
+    return articleWithThumbnail ? articleWithThumbnail.thumbnail : null
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -189,16 +199,65 @@ const Highlights = () => {
         <div className="space-y-6">
           {stories.map((story, index) => {
             const audioUrl = getFullAudioUrl(story.narration)
+            const thumbnail = getThumbnailFromSource(story)
             
             return (
-              <div key={story.url || story.id || index} className="bg-white rounded-lg shadow-md p-6">
-                {/* Story Number/Order */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-semibold text-sm">
-                    {story.order || index + 1}
+              <div key={story.url || story.id || index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                {/* Image for single story view - prominent at top */}
+                {isSingleStoryView && thumbnail && (
+                  <div className="relative w-full">
+                    <img 
+                      src={thumbnail} 
+                      alt={story.title}
+                      className="w-full h-64 object-cover bg-gray-200"
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                    <div className="absolute top-4 left-4 z-10">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-lg">
+                          {story.order || index + 1}
+                        </div>
+                        <span className="inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-full uppercase shadow-lg">
+                          Highlight
+                        </span>
+                      </div>
+                    </div>
+                    {story.narration && (
+                      <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 text-indigo-600">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+                        </svg>
+                        <span className="text-xs font-medium text-indigo-600">Audio</span>
+                      </div>
+                    )}
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900">{story.title}</h2>
-                </div>
+                )}
+
+                <div className="p-6">
+                  {/* Story Number/Order and Title */}
+                  <div className="flex items-center gap-3 mb-4">
+                    {(!isSingleStoryView || !thumbnail) && (
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-semibold text-sm">
+                        {story.order || index + 1}
+                      </div>
+                    )}
+                    {/* Image for list view - alongside content */}
+                    {!isSingleStoryView && thumbnail && (
+                      <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
+                        <img 
+                          src={thumbnail} 
+                          alt={story.title}
+                          className="w-full h-full object-cover bg-gray-200"
+                          onError={(e) => {
+                            e.target.style.display = 'none'
+                          }}
+                        />
+                      </div>
+                    )}
+                    <h2 className={`${!isSingleStoryView && thumbnail ? 'flex-1' : ''} text-2xl font-bold text-gray-900`}>{story.title}</h2>
+                  </div>
 
                 {/* Audio Player */}
                 {audioUrl && (
@@ -281,6 +340,7 @@ const Highlights = () => {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             )
           })}

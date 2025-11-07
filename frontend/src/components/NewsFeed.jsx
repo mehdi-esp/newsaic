@@ -17,11 +17,6 @@ function NewsFeed({ articles, loading, feedType, isAuthenticated }) {
           title: 'No personalized articles yet',
           message: 'We\'re learning your interests. Check back soon for personalized content!'
         }
-      case 'today':
-        return {
-          title: 'No articles published today',
-          message: 'Check back later for today\'s latest news'
-        }
       default:
         return {
           title: 'No articles found',
@@ -35,7 +30,7 @@ function NewsFeed({ articles, loading, feedType, isAuthenticated }) {
     return (
       <div className="text-center py-16 px-8 text-gray-600">
         <div className="text-6xl mb-4">
-          {feedType === 'foryou' ? '✨' : feedType === 'today' ? '📅' : '🔍'}
+          {feedType === 'foryou' ? '✨' : '🔍'}
         </div>
         <h3 className="text-2xl font-semibold text-gray-900 mb-4">{emptyState.title}</h3>
         <p>{emptyState.message}</p>

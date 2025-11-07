@@ -3,7 +3,6 @@ import { Routes, Route, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import NewsFeed from './components/NewsFeed'
 import CategoryFilter from './components/CategoryFilter'
-import FeedSelector from './components/FeedSelector'
 import HomePage from './components/HomePage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Register from './components/Register'
@@ -122,17 +121,6 @@ function App() {
           article.section_id === interest.toLowerCase()
         )
       )
-    } else if (selectedFeed === 'today') {
-      // Filter by today's date
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      
-      filtered = filtered.filter(article => {
-        if (!article.first_publication_date) return false
-        const articleDate = new Date(article.first_publication_date)
-        articleDate.setHours(0, 0, 0, 0)
-        return articleDate.getTime() === today.getTime()
-      })
     }
     // 'general' feed shows all articles (no additional filtering)
 
@@ -181,8 +169,8 @@ function App() {
     if (feed === 'foryou') {
       // Always navigate to /for-you when For You is selected
       navigate('/for-you')
-    } else if (window.location.pathname === '/for-you' && (feed === 'general' || feed === 'today')) {
-      // If on /for-you page and selecting General or Today, navigate to home
+    } else if (window.location.pathname === '/for-you' && feed === 'general') {
+      // If on /for-you page and selecting General, navigate to home
       navigate('/')
     }
     // If on /top-stories page and selecting General or Today, stay on /top-stories but update content
@@ -232,17 +220,8 @@ function App() {
                 <div className="bg-white border-b border-gray-200 py-4">
                   <div className="container mx-auto px-4">
                     <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                      {selectedFeed === 'today' ? 'Today\'s Stories' : 
-                       selectedFeed === 'foryou' ? 'For You' : 'Top Stories'}
+                      {selectedFeed === 'foryou' ? 'For You' : 'Top Stories'}
                     </h1>
-                    
-                    {/* Feed Selector */}
-                    <div className="mb-4">
-                      <FeedSelector 
-                        selectedFeed={selectedFeed}
-                        onFeedChange={handleFeedChange}
-                      />
-                    </div>
                     
                     {/* Category Filter */}
                     <div className="mb-4">
@@ -271,11 +250,7 @@ function App() {
                 <div className="bg-white border-b border-gray-200 py-4">
                   <div className="container mx-auto px-4">
                     <h1 className="text-2xl font-bold text-gray-900 mb-4">Category News</h1>
-                    <div className="flex gap-4">
-                      <FeedSelector 
-                        selectedFeed="general"
-                        onFeedChange={handleFeedChange}
-                      />
+                    <div className="mb-4">
                       <CategoryFilter 
                         selectedCategory={selectedCategory}
                         onCategoryChange={handleCategoryChange}
@@ -303,10 +278,6 @@ function App() {
                 onLoginSuccess={handleLoginSuccess}
               >
                 <div>
-                  <FeedSelector 
-                    selectedFeed="foryou"
-                    onFeedChange={handleFeedChange}
-                  />
                   <CategoryFilter 
                     selectedCategory={selectedCategory}
                     onCategoryChange={handleCategoryChange}
