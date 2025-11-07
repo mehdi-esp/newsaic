@@ -67,8 +67,8 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Article.objects.all().order_by("-first_publication_date")
 
-    @action(detail=True, methods=["get"])
-    def recommended_articles(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="similar")
+    def similar_articles(self, request, pk=None):
         """
         Return the 3 most similar articles (vector similarity)
         excluding the article itself.
