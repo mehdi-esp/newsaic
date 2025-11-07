@@ -1,7 +1,7 @@
 import React from 'react'
 import NewsCard from './NewsCard'
 
-function NewsFeed({ articles, loading, feedType }) {
+function NewsFeed({ articles, loading, feedType, isAuthenticated }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
