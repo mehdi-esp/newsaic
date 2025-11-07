@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User, UserType, Bookmark, AuthorPersona, SectionPreference
 from articles.models import Section
+from articles.serializers import ArticleSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -210,6 +211,7 @@ class ReaderRegisterSerializer(serializers.ModelSerializer):
         return user
 
 class BookmarkSerializer(serializers.HyperlinkedModelSerializer):
+    article = ArticleSerializer()
     class Meta:
         model = Bookmark
         fields = '__all__'
