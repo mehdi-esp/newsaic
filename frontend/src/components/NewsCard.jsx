@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { bookmarkArticle, unbookmarkArticle, checkBookmark } from '../services/authService'
 
 function NewsCard({ article, featured = false, compact = false, isAuthenticated = false }) {
+  const navigate = useNavigate()
   const [isBookmarked, setIsBookmarked] = useState(article.bookmarked)
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(false)
 
@@ -42,8 +44,25 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
   }
 
   const handleClick = () => {
-    if (article.web_url) {
-      window.open(article.web_url, '_blank', 'noopener,noreferrer')
+    // Use article.id (MongoDB ObjectId) if available, otherwise use guardian_id
+    // If article has a url field (from HyperlinkedModelSerializer), extract ID from it
+    let articleId = article.id
+    
+    if (!articleId && article.url) {
+      // Extract ID from URL like "http://localhost:8000/articles/507f1f77bcf86cd799439011/"
+      const match = article.url.match(/\/articles\/([^\/]+)\/?$/)
+      if (match) {
+        articleId = match[1]
+      }
+    }
+    
+    if (!articleId && article.guardian_id) {
+      // Fallback to guardian_id if id is not available
+      articleId = article.guardian_id
+    }
+    
+    if (articleId) {
+      navigate(`/article/${articleId}`)
     }
   }
 

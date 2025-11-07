@@ -9,6 +9,7 @@ import Register from './components/Register'
 import Settings from './components/Settings'
 import Highlights from './components/Highlights'
 import Bookmarks from './components/Bookmarks'
+import ArticleDetail from './components/ArticleDetail'
 import { getNews, searchNews } from './services/newsService'
 import SearchPage from './components/SearchPage' // Import SearchPage
 import { checkAuth, logout } from './services/authService'
@@ -339,6 +340,10 @@ function App() {
                 <Highlights />
               </ProtectedRoute>
             } 
+          />
+          <Route 
+            path="/article/:id" 
+            element={<ArticleDetail isAuthenticated={isAuthenticated} />} 
           />
         </Routes>
       </div>
