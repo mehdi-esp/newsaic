@@ -63,21 +63,23 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
     if (!isAuthenticated || !article.guardian_id) return null
     
     const positionClass = compact ? 'top-1 right-1' : 'top-4 right-4'
-    const sizeClass = compact ? 'w-4 h-4 p-1' : 'w-5 h-5 p-2'
+    const paddingClass = compact ? 'p-1' : 'p-2'
+    const iconSizeClass = compact ? 'w-3 h-3' : 'w-5 h-5'
     
     return (
       <button
         onClick={handleBookmarkClick}
-        className={`absolute ${positionClass} z-10 ${sizeClass} bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all group`}
+        className={`absolute ${positionClass} z-20 ${paddingClass} bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all group pointer-events-auto`}
         title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
         disabled={isCheckingBookmark}
+        type="button"
       >
         {isBookmarked ? (
-          <svg className={`${compact ? 'w-3 h-3' : 'w-5 h-5'} text-indigo-600 group-hover:text-indigo-700 transition-colors`} fill="currentColor" viewBox="0 0 20 20">
+          <svg className={`${iconSizeClass} text-indigo-600 group-hover:text-indigo-700 transition-colors`} fill="currentColor" viewBox="0 0 20 20">
             <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
           </svg>
         ) : (
-          <svg className={`${compact ? 'w-3 h-3' : 'w-5 h-5'} text-gray-400 group-hover:text-indigo-600 transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`${iconSizeClass} text-gray-400 group-hover:text-indigo-600 transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
         )}

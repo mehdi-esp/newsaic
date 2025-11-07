@@ -12,10 +12,14 @@ function Navbar({ onSearch, userInterests, onInterestsChange, user, onLogout }) 
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           <Link 
-            className="flex items-center gap-2 text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition-colors" 
+            className="flex items-center hover:opacity-80 transition-opacity" 
             to="/"
           >
-            📰 Newsaic
+            <img 
+              src="/newsaic_logo.png" 
+              alt="Newsaic" 
+              className="h-[40px] w-auto"
+            />
           </Link>
           
           {/* Desktop Navigation */}
