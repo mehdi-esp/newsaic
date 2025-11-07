@@ -2,14 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { bookmarkArticle, unbookmarkArticle, checkBookmark } from '../services/authService'
 
 function NewsCard({ article, featured = false, compact = false, isAuthenticated = false }) {
-  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(article.bookmarked)
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(false)
-
-  useEffect(() => {
-    if (isAuthenticated && article.guardian_id) {
-      checkBookmarkStatus()
-    }
-  }, [isAuthenticated, article.guardian_id])
 
   const checkBookmarkStatus = async () => {
     if (!article.guardian_id) return

@@ -32,12 +32,12 @@ const Bookmarks = () => {
     }
   }
 
-  const handleRemoveBookmark = async (articleId) => {
+  const handleRemoveBookmark = async (article) => {
     try {
-      const result = await unbookmarkArticle(articleId)
+      const result = await unbookmarkArticle(article.url)
       if (result.success) {
         // Remove bookmark from list
-        setBookmarks(bookmarks.filter(article => article.guardian_id !== articleId && article.id !== articleId))
+        setBookmarks(bookmarks.filter(a => a.guardian_id !== article.guardian_id))
       } else {
         console.error('Failed to remove bookmark:', result.error)
       }
@@ -110,7 +110,7 @@ const Bookmarks = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleRemoveBookmark(article.guardian_id || article.id)
+                  handleRemoveBookmark(article)
                 }}
                 className="absolute top-2 right-2 z-20 p-2 bg-white rounded-full shadow-md hover:bg-red-50 hover:shadow-lg transition-all group"
                 title="Remove bookmark"
