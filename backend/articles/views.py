@@ -16,6 +16,15 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ArticleSerializer
     permission_classes = [AllowAny]
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if user.is_authenticated and user.user_type == UserType.READER:
+            ctx['bookmark_ids'] = set(
+                user.bookmark_set.values_list('article_id', flat=True)
+            )
+        return ctx
+
     def get_queryset(self):
 
         if query := self.request.query_params.get('q'):

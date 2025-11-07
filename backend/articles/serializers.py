@@ -13,6 +13,11 @@ class SectionSerializer(serializers.HyperlinkedModelSerializer):
 class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     tags = serializers.SerializerMethodField()
     authors = serializers.SerializerMethodField()
+    bookmarked = serializers.SerializerMethodField()
+
+    def get_bookmarked(self, obj):
+        ids = self.context.get('bookmark_ids', set())
+        return obj.id in ids if ids else None
 
     class Meta:
         model = Article
