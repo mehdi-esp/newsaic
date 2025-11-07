@@ -21,7 +21,7 @@ class ArticleSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Article
-        fields = '__all__'
+        exclude = ('embedding', )
 
     def get_tags(self, obj):
         if obj.tags:
