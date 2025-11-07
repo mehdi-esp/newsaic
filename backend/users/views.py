@@ -1,4 +1,4 @@
-from rest_framework import views, viewsets, generics, permissions, status
+from rest_framework import views, viewsets, generics, mixins, permissions, status
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from rest_framework import status
 from rest_framework.decorators import action
@@ -41,15 +41,15 @@ class MySectionPreferencesView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-class BookmarkViewSet(viewsets.ModelViewSet):
+class BookmarkViewSet(mixins.ListModelMixin,
+                      mixins.RetrieveModelMixin,
+                      mixins.DestroyModelMixin,
+                      viewsets.GenericViewSet):
     serializer_class = BookmarkSerializer
     permission_classes = [permissions.IsAuthenticated, IsNewsReader] # Admins cannot see bookmarks for now
 
     def get_queryset(self):
         return Bookmark.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
 
 class ReaderRegisterView(generics.CreateAPIView):
     serializer_class = ReaderRegisterSerializer
