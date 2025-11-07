@@ -106,7 +106,7 @@ const Bookmarks = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {bookmarks.map((article, index) => (
             <div key={article.guardian_id || article.id || index} className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200 relative">
-              <NewsCard article={article} isAuthenticated={true} />
+              <NewsCard article={article} isAuthenticated={true} showBookmarkButton={false} />
               <button
                 onClick={(e) => {
                   e.stopPropagation()

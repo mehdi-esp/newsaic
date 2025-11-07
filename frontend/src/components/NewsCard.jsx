@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { bookmarkArticle, unbookmarkArticle, checkBookmark } from '../services/authService'
 
-function NewsCard({ article, featured = false, compact = false, isAuthenticated = false }) {
+function NewsCard({ article, featured = false, compact = false, isAuthenticated = false, showBookmarkButton = true }) {
   const navigate = useNavigate()
   const [isBookmarked, setIsBookmarked] = useState(article.bookmarked)
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(false)
@@ -79,7 +79,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
   }
 
   const BookmarkButton = ({ compact = false }) => {
-    if (!isAuthenticated || !article.guardian_id) return null
+    if (!showBookmarkButton || !isAuthenticated || !article.guardian_id) return null
     
     const positionClass = compact ? 'top-1 right-1' : 'top-4 right-4'
     const paddingClass = compact ? 'p-1' : 'p-2'
