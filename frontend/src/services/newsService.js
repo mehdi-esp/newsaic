@@ -50,27 +50,12 @@ export const searchNews = async (query) => {
   }
 
   try {
-    // Since Django backend doesn't have search endpoint yet,
-    // we'll fetch all articles and search client-side
-    const response = await apiClient.get('/articles/')
-    const articles = response.data.results || response.data
-    
-    const lowerQuery = query.toLowerCase()
-    return articles.filter(article =>
-      article.web_title?.toLowerCase().includes(lowerQuery) ||
-      article.headline?.toLowerCase().includes(lowerQuery) ||
-      article.trail_text?.toLowerCase().includes(lowerQuery) ||
-      article.body_text?.toLowerCase().includes(lowerQuery)
-    )
+    const response = await apiClient.get('/articles/', { params: { q: query } })
+    // We don't paginate since the number of results is small.
+    return response.data.results
   } catch (error) {
     console.error('Error searching news:', error)
-    const lowerQuery = query.toLowerCase()
-    return mockNewsData.filter(article =>
-      article.web_title?.toLowerCase().includes(lowerQuery) ||
-      article.headline?.toLowerCase().includes(lowerQuery) ||
-      article.trail_text?.toLowerCase().includes(lowerQuery) ||
-      article.body_text?.toLowerCase().includes(lowerQuery)
-    )
+    throw error;
   }
 }
 

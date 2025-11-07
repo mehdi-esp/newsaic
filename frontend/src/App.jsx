@@ -11,6 +11,7 @@ import Settings from './components/Settings'
 import Highlights from './components/Highlights'
 import Bookmarks from './components/Bookmarks'
 import { getNews, searchNews } from './services/newsService'
+import SearchPage from './components/SearchPage' // Import SearchPage
 import { checkAuth, logout } from './services/authService'
 import './App.css'
 
@@ -19,7 +20,6 @@ function App() {
   const [filteredArticles, setFilteredArticles] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedFeed, setSelectedFeed] = useState('general')
-  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
@@ -43,7 +43,7 @@ function App() {
   // Filter articles based on feed, category and search query
   useEffect(() => {
     filterArticles()
-  }, [articles, selectedFeed, selectedCategory, searchQuery, userInterests])
+  }, [articles, selectedFeed, selectedCategory, userInterests])
 
   const checkAuthentication = async () => {
     setAuthLoading(true)
@@ -145,6 +145,7 @@ function App() {
     }
 
     // Filter by search query - search in multiple fields
+    /*
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(article =>
@@ -153,13 +154,18 @@ function App() {
         article.trail_text?.toLowerCase().includes(query) ||
         article.body_text?.toLowerCase().includes(query)
       )
-    }
+    } */
 
     setFilteredArticles(filtered)
   }
 
   const handleSearch = (query) => {
-    setSearchQuery(query)
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`)
+    } else {
+      // Navigate to the search page without a query to show the default state
+      navigate('/search')
+    }
   }
 
   const handleCategoryChange = (category) => {
@@ -214,6 +220,10 @@ function App() {
           <Route 
             path="/" 
             element={<HomePage isAuthenticated={isAuthenticated} user={user} />} 
+          />
+          <Route
+            path="/search"
+            element={<SearchPage isAuthenticated={isAuthenticated} />}
           />
           <Route 
             path="/top-stories" 
