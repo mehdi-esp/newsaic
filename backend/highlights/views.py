@@ -1,9 +1,8 @@
 from rest_framework import viewsets
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from highlights.models import DailyHighlight
 from users.permissions import IsNewsReader
-from .serializers import StorySerializer  # , DailyHighlightSerializer
+from .serializers import StorySerializer
 from .models import Story
 
 
