@@ -10,9 +10,10 @@ const USE_MOCK_DATA = false // Now using real Django backend
 
 /**
  * Fetch all news articles
+ * @param {boolean} preferred - Whether to retrieve preferred news articles
  * @returns {Promise<Array>} Array of news articles
  */
-export const getNews = async () => {
+export const getNews = async (preferred = false) => {
   if (USE_MOCK_DATA) {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500))
@@ -20,7 +21,8 @@ export const getNews = async () => {
   }
 
   try {
-    const response = await apiClient.get('/articles/')
+    const params = preferred ? { preferred: true } : {};
+    const response = await apiClient.get('/articles/', { params })
     // Django REST Framework returns paginated results in 'results' field
     return response.data.results || response.data
   } catch (error) {

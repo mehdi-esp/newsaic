@@ -46,11 +46,15 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
 
         if self.request.user.is_authenticated:
             user: User = self.request.user
+
+            preferred = "preferred" in self.request.query_params and self.request.query_params["preferred"].lower() == "true"
+
             if user.user_type == UserType.ADMIN:
                 return Article.objects.all().order_by("-first_publication_date")
 
-            section_ids = [s.section_id for s in user.preferred_sections]
-            return Article.objects.filter(section_id__in=section_ids).order_by("-first_publication_date")
+            if user.user_type == UserType.READER and preferred:
+                section_ids = [s.section_id for s in user.preferred_sections]
+                return Article.objects.filter(section_id__in=section_ids).order_by("-first_publication_date")
 
         return Article.objects.all().order_by("-first_publication_date")
 
