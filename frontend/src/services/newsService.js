@@ -31,39 +31,6 @@ export const getNews = async () => {
 }
 
 /**
- * Fetch news by category
- * @param {string} category - The category to filter by (section_name)
- * @returns {Promise<Array>} Array of filtered news articles
- */
-export const getNewsByCategory = async (category) => {
-  if (USE_MOCK_DATA) {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    return mockNewsData.filter(article => 
-      article.section_name?.toLowerCase() === category.toLowerCase() ||
-      article.section_id?.toLowerCase() === category.toLowerCase()
-    )
-  }
-
-  try {
-    // Since Django backend doesn't have category filtering endpoint yet,
-    // we'll fetch all articles and filter client-side
-    const response = await apiClient.get('/articles/')
-    const articles = response.data.results || response.data
-    
-    return articles.filter(article => 
-      article.section_name?.toLowerCase() === category.toLowerCase() ||
-      article.section_id?.toLowerCase() === category.toLowerCase()
-    )
-  } catch (error) {
-    console.error('Error fetching news by category:', error)
-    return mockNewsData.filter(article => 
-      article.section_name?.toLowerCase() === category.toLowerCase() ||
-      article.section_id?.toLowerCase() === category.toLowerCase()
-    )
-  }
-}
-
-/**
  * Search news articles
  * @param {string} query - The search query
  * @returns {Promise<Array>} Array of matching news articles
