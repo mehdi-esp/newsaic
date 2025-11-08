@@ -4,6 +4,7 @@ import logging
 from utils.embeddings import embed
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from tqdm import tqdm
+from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -18,30 +19,54 @@ text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
 )
 
 
-def embed_article_chunks(article: Article):
+def embed_article_chunks(articles: list[Article]):
     """
-    Split an article into chunks, generate embeddings for the chunks, and return them.
-    Does NOT write to the database.
+    Split all articles into chunks, generate embeddings in a single batch,
+    and return Chunk instances. Does NOT write to the database.
     """
-    texts = text_splitter.split_text(article.body_text)
+    # Build Documents for all articles
+    documents = [
+        Document(page_content=article.body_text, metadata={"article_id": article.id})
+        for article in articles
+    ]
 
-    if not texts:
-        tqdm.write(f"Article '{article.web_title}' produced no chunks. Skipping.")
+    # Split documents into chunks, preserving metadata
+    chunked_documents = text_splitter.split_documents(documents)
+
+    if not chunked_documents:
+        tqdm.write("No chunks produced for this batch. Skipping.")
         return []
+
+    # Assign chunk_index manually per article
+    chunk_indices = {}
+    for doc in chunked_documents:
+        article_id = doc.metadata["article_id"]
+        idx = chunk_indices.get(article_id, 0)
+        doc.metadata["chunk_index"] = idx
+        chunk_indices[article_id] = idx + 1
+
+    # Extract text for embedding
+    texts = [doc.page_content for doc in chunked_documents]
 
     try:
         embeddings = embed(texts)
     except Exception as e:
-        tqdm.write(f"Error embedding chunks for article '{article.web_title}': {e}")
+        tqdm.write(f"Error embedding batch: {e}")
         return []
 
-    chunks = [
-        Chunk(article=article, chunk_index=i, text=text, embedding=embedding)
-        for i, (text, embedding) in enumerate(zip(texts, embeddings))
+    # Build Chunk instances using metadata from Documents
+    chunks_to_create = [
+        Chunk(
+            article_id=doc.metadata["article_id"],
+            chunk_index=doc.metadata["chunk_index"],
+            text=doc.page_content,
+            embedding=embedding
+        )
+        for doc, embedding in zip(chunked_documents, embeddings)
     ]
 
-    tqdm.write(f"Prepared {len(chunks)} chunks for article '{article.web_title}'")
-    return chunks
+    tqdm.write(f"Prepared {len(chunks_to_create)} chunks for {len(articles)} articles")
+    return chunks_to_create
 
 
 class Command(BaseCommand):
@@ -52,7 +77,7 @@ class Command(BaseCommand):
             "--batch-size",
             type=int,
             default=20,
-            help="Number of articles to bulk write per DB operation",
+            help="Number of articles to batch embed.",
         )
         parser.add_argument(
             "--max-articles",
@@ -65,7 +90,6 @@ class Command(BaseCommand):
             action="store_true",
             help="Re-embed articles even if chunks already exist",
         )
-        # Note: batch_size is for DB writes, not embeddings.
 
     def handle(self, *args, **options):
         batch_size = options["batch_size"]
@@ -96,24 +120,18 @@ class Command(BaseCommand):
             desc=f"Embedding articles (total: {total_articles})",
             unit="batch",
         ):
-            end = start + batch_size
-            end = min(end, total_articles)
-
+            end = min(start + batch_size, total_articles)
             articles_batch = articles_list[start:end]
 
             if reembed:
                 Chunk.objects.filter(article__in=articles_batch).delete()
 
-            all_chunks_to_create = []
-            for article in articles_batch:
-                chunks = embed_article_chunks(article)
-                if chunks:
-                    all_chunks_to_create.extend(chunks)
+            all_chunks_to_create = embed_article_chunks(articles_batch)
 
             if all_chunks_to_create:
                 Chunk.objects.bulk_create(all_chunks_to_create)
                 tqdm.write(
-                    f"Bulk wrote {len(all_chunks_to_create)} chunks for articles {start + 1}-{start + len(articles_batch)}"
+                    f"Bulk wrote {len(all_chunks_to_create)} chunks for articles {start + 1}-{end}"
                 )
 
         tqdm.write("All chunk embeddings completed.")
