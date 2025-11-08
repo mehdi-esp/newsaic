@@ -8,9 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from users.permissions import BookmarkPermission
 from django_mongodb_backend.expressions import SearchVector
-import ollama
-
-EMBEDDING_MODEL = "qwen3-embedding:0.6B"
+from utils.embeddings import embed
 
 class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ArticleSerializer
@@ -28,7 +26,7 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
 
         if query := self.request.query_params.get('q'):
-            embedded_query = ollama.embed(EMBEDDING_MODEL, [query])["embeddings"][0]
+            embedded_query = embed([query])[0]
 
             results = Chunk.objects.annotate(
                 score=SearchVector(

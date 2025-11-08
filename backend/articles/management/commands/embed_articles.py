@@ -1,15 +1,13 @@
 from django.core.management.base import BaseCommand
 from articles.models import Article
 import logging
-import ollama
+from utils.embeddings import embed
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 if not logger.hasHandlers():
     console_handler = logging.StreamHandler()
     logger.addHandler(console_handler)
-
-EMBEDDING_MODEL = "qwen3-embedding:0.6B"
 
 def embed_articles(batch_size: int = 100):
     """
@@ -29,7 +27,7 @@ def embed_articles(batch_size: int = 100):
         contents = [a.body_text for a in batch]
 
         try:
-            embeddings = ollama.embed(EMBEDDING_MODEL, contents)["embeddings"]
+            embeddings = embed(contents)
             for article, embedding in zip(batch, embeddings):
                 article.embedding = embedding
             Article.objects.bulk_update(batch, ["embedding"])

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from articles.models import Article, Chunk
 import logging
-import ollama
+from utils.embeddings import embed
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from tqdm import tqdm
 
@@ -10,8 +10,6 @@ logger.setLevel(logging.INFO)
 if not logger.hasHandlers():
     console_handler = logging.StreamHandler()
     logger.addHandler(console_handler)
-
-EMBEDDING_MODEL = "qwen3-embedding:0.6B"
 
 # Text splitter configuration
 text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
@@ -32,7 +30,7 @@ def embed_article_chunks(article: Article):
         return []
 
     try:
-        embeddings = ollama.embed(EMBEDDING_MODEL, texts)["embeddings"]
+        embeddings = embed(texts)
     except Exception as e:
         tqdm.write(f"Error embedding chunks for article '{article.web_title}': {e}")
         return []
