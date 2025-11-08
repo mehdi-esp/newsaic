@@ -20,6 +20,11 @@ Create a `.env` file and set the following environment variables:
 - `GUARDIAN_API_KEY`
 - `GROQ_API_KEY`
 
+Optional (needed if using OpenRouter embeddings):
+
+- `EMBEDDING_BACKEND` (set to `OPENROUTER`)
+- `OPENROUTER_API_KEY`
+
 ### Run migrations
 
 ```bash
