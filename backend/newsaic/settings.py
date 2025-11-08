@@ -155,7 +155,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE' : 100,
 }
 
-CELERY_TIMEZONE = "Africa/Tunis"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BROKER_URL = f"sqla+sqlite:///{os.path.join(BASE_DIR, '.var/celerydb.sqlite')}"
