@@ -76,7 +76,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--batch-size",
             type=int,
-            default=20,
+            default=30,
             help="Number of articles to batch embed.",
         )
         parser.add_argument(
