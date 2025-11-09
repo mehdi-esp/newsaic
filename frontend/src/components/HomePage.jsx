@@ -4,6 +4,7 @@ import { getNews } from '../services/newsService'
 import { getDailyHighlights } from '../services/highlightsService'
 import NewsCard from './NewsCard'
 import HighlightCard from './HighlightCard'
+import Recommendations from './Recommendations'
 
 const HomePage = ({ isAuthenticated, user }) => {
   const [articles, setArticles] = useState([])
@@ -126,6 +127,16 @@ const HomePage = ({ isAuthenticated, user }) => {
           </div>
         )}
 
+        {/* Recommended for you Section */}
+        {isAuthenticated && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Recommended for you</h2>
+            </div>
+            <Recommendations isAuthenticated={isAuthenticated} limit={6} />
+          </div>
+        )}
+
         {/* Top Stories Section - Show if not authenticated or as fallback */}
         {!isAuthenticated && (
           <div className="mb-8">
@@ -183,46 +194,6 @@ const HomePage = ({ isAuthenticated, user }) => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* For You Section */}
-        {isAuthenticated ? (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">For you</h2>
-              <Link 
-                to="/for-you" 
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                View all →
-              </Link>
-            </div>
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome back, {user?.username || 'User'}!</h3>
-                  <p className="text-gray-600 mb-4">Your personalized feed is ready with stories tailored to your interests.</p>
-                </div>
-                <Link
-                  to="/for-you"
-                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Go to For You
-                </Link>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-blue-50 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Picks for you</h3>
-            <p className="text-gray-600 mb-4">Sign in for personalized stories in your briefing & news feed.</p>
-            <Link
-              to="/for-you"
-              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors"
-            >
-              Sign in
-            </Link>
           </div>
         )}
       </div>

@@ -34,6 +34,23 @@ const getCSRFToken = () => {
 }
 
 /**
+ * Fetch CSRF token cookie from Django by making a GET request
+ * This sets the csrftoken cookie in the browser
+ * @returns {Promise<void>}
+ */
+export const fetchCSRFToken = async () => {
+  try {
+    // Make a GET request to any endpoint to get CSRF cookie
+    // Using /sections/ as it's a simple endpoint that doesn't require auth
+    await apiClient.get('/sections/')
+  } catch (error) {
+    // Even if the request fails, the CSRF cookie might still be set
+    // Log error but don't throw - we'll check for token availability later
+    console.warn('CSRF token fetch warning:', error)
+  }
+}
+
+/**
  * Login user with Django session authentication
  * @param {string} username - Username
  * @param {string} password - Password
@@ -41,10 +58,21 @@ const getCSRFToken = () => {
  */
 export const login = async (username, password) => {
   try {
+    // Ensure CSRF token is available
+    let csrfToken = getCSRFToken()
+    if (!csrfToken) {
+      // Fetch CSRF token if not available
+      await fetchCSRFToken()
+      csrfToken = getCSRFToken()
+    }
 
     const response = await apiClient.post('/login/', {
       username,
       password
+    }, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
     })
     return {
       success: true,
@@ -177,6 +205,64 @@ export const updateProfile = async (userData) => {
     return {
       success: false,
       error: error.response?.data || error.message || 'Failed to update profile'
+    }
+  }
+}
+
+/**
+ * Update user persona
+ * @param {Object} personaData - Persona data to update (tone, style, length, extra_instructions)
+ * @returns {Promise<Object>} Update response
+ */
+export const updatePersona = async (personaData) => {
+  try {
+    const csrfToken = getCSRFToken()
+    
+    const response = await apiClient.patch('/me/persona/', personaData, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    
+    return {
+      success: true,
+      persona: response.data
+    }
+  } catch (error) {
+    console.error('Update persona error:', error)
+    return {
+      success: false,
+      error: error.response?.data || error.message || 'Failed to update persona'
+    }
+  }
+}
+
+/**
+ * Update user section preferences
+ * @param {Array} preferredSections - Array of section objects with section_id field
+ * @returns {Promise<Object>} Update response
+ */
+export const updateSectionPreferences = async (preferredSections) => {
+  try {
+    const csrfToken = getCSRFToken()
+    
+    const response = await apiClient.patch('/me/sections/', {
+      preferred_sections: preferredSections
+    }, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    
+    return {
+      success: true,
+      user: response.data
+    }
+  } catch (error) {
+    console.error('Update section preferences error:', error)
+    return {
+      success: false,
+      error: error.response?.data || error.message || 'Failed to update section preferences'
     }
   }
 }

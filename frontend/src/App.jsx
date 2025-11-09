@@ -12,7 +12,7 @@ import Bookmarks from './components/Bookmarks'
 import ArticleDetail from './components/ArticleDetail'
 import { getNews, searchNews } from './services/newsService'
 import SearchPage from './components/SearchPage' // Import SearchPage
-import { checkAuth, logout } from './services/authService'
+import { checkAuth, logout, fetchCSRFToken } from './services/authService'
 import './App.css'
 
 function App() {
@@ -30,6 +30,11 @@ function App() {
   // Mock user interests for "For You" feed (will come from backend later)
   const [userInterests, setUserInterests] = useState(['Technology', 'Science', 'Business'])
 
+  // Fetch CSRF token on component mount (before any POST requests)
+  useEffect(() => {
+    fetchCSRFToken()
+  }, [])
+
   // Check authentication on component mount
   useEffect(() => {
     checkAuthentication()
@@ -39,6 +44,13 @@ function App() {
   useEffect(() => {
     fetchNews()
   }, [])
+
+  // Fetch preferred articles when switching to "For You" feed
+  useEffect(() => {
+    if (selectedFeed === 'foryou' && isAuthenticated) {
+      fetchForYouArticles()
+    }
+  }, [selectedFeed, isAuthenticated])
 
   // Filter articles based on feed, category and search query
   useEffect(() => {
@@ -66,12 +78,16 @@ function App() {
     }
   }
 
-  const handleLoginSuccess = async () => {
+  const handleLoginSuccess = async (redirectPath = null) => {
     setLoginLoading(true)
     try {
       // Add a small delay to ensure the session is fully established
       await new Promise(resolve => setTimeout(resolve, 500))
       await checkAuthentication()
+      // Navigate to redirect path if provided
+      if (redirectPath) {
+        navigate(redirectPath)
+      }
     } finally {
       setLoginLoading(false)
     }
@@ -110,19 +126,24 @@ function App() {
     }
   }
 
+  const fetchForYouArticles = async () => {
+    setLoading(true)
+    try {
+      const data = await getNews(true) // Pass preferred=true
+      setArticles(data)
+    } catch (error) {
+      console.error('Error fetching for you articles:', error)
+      setArticles([]) // Set empty array on error
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const filterArticles = () => {
     let filtered = articles
 
-    // Filter by feed type
-    if (selectedFeed === 'foryou') {
-      // Filter by user interests (personalized feed)
-      filtered = filtered.filter(article => 
-        userInterests.some(interest => 
-          article.section_name === interest || 
-          article.section_id === interest.toLowerCase()
-        )
-      )
-    }
+    // For "For You" feed, articles are already filtered by backend (preferred=true)
+    // No need for client-side filtering by userInterests anymore
     // 'general' feed shows all articles (no additional filtering)
 
     // Filter by category using section_name

@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { stripHtmlTags } from '../utils/articleHelpers'
 
 function HighlightCard({ story, featured = false, compact = false }) {
   const navigate = useNavigate()
@@ -101,7 +102,7 @@ function HighlightCard({ story, featured = false, compact = false }) {
             </div>
           )}
           <h3 className="text-2xl font-bold text-gray-900 mb-4 line-clamp-3 leading-tight group-hover:text-indigo-600 transition-colors">
-            {story.title}
+            {stripHtmlTags(story.title)}
           </h3>
           <p className="text-gray-600 mb-6 line-clamp-4 leading-relaxed flex-1">
             {getPreviewText()}
@@ -161,7 +162,7 @@ function HighlightCard({ story, featured = false, compact = false }) {
             )}
           </div>
           <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
-            {story.title}
+            {stripHtmlTags(story.title)}
           </h3>
           <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed mb-2">
             {getPreviewText()}
@@ -232,7 +233,7 @@ function HighlightCard({ story, featured = false, compact = false }) {
           </div>
         )}
         <h3 className="text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
-          {story.title}
+          {stripHtmlTags(story.title)}
         </h3>
         <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed flex-1">
           {getPreviewText()}

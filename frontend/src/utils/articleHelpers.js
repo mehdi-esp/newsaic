@@ -37,6 +37,20 @@ export const getArticleTitle = (article) => {
 }
 
 /**
+ * Strip HTML tags from a string
+ * @param {string} html - String that may contain HTML tags
+ * @returns {string} Plain text without HTML tags
+ */
+export const stripHtmlTags = (html) => {
+  if (!html || typeof html !== 'string') return html || ''
+  
+  // Create a temporary DOM element to parse HTML
+  const tmp = document.createElement('DIV')
+  tmp.innerHTML = html
+  return tmp.textContent || tmp.innerText || ''
+}
+
+/**
  * Get display description for an article
  * @param {Object} article
  * @returns {string}

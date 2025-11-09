@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { bookmarkArticle, unbookmarkArticle, checkBookmark } from '../services/authService'
+import { stripHtmlTags } from '../utils/articleHelpers'
 
 function NewsCard({ article, featured = false, compact = false, isAuthenticated = false, showBookmarkButton = true }) {
   const navigate = useNavigate()
@@ -133,7 +134,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
         {!article.thumbnail && <BookmarkButton compact={false} />}
         <div className="p-6 flex-1 flex flex-col">
           <h3 className="text-2xl font-bold text-gray-900 mb-4 line-clamp-3 leading-tight group-hover:text-indigo-600 transition-colors">
-            {article.headline || article.web_title}
+            {stripHtmlTags(article.headline || article.web_title)}
           </h3>
           <p className="text-gray-600 mb-6 line-clamp-4 leading-relaxed flex-1">
             {article.trail_text || article.body_text || 'No description available'}
@@ -172,7 +173,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
             {article.section_name || article.section_id || 'News'}
           </span>
           <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
-            {article.headline || article.web_title}
+            {stripHtmlTags(article.headline || article.web_title)}
           </h3>
           <div className="flex justify-between items-center text-xs text-gray-500 mt-auto">
             <span className="truncate">{getAuthorNames()}</span>
@@ -207,7 +208,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
           {article.section_name || article.section_id || 'News'}
         </span>
         <h3 className="text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
-          {article.headline || article.web_title}
+          {stripHtmlTags(article.headline || article.web_title)}
         </h3>
         <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed flex-1">
           {article.trail_text || article.body_text || 'No description available'}

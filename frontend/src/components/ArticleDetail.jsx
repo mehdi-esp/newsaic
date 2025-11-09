@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getNewsById } from '../services/newsService'
+import { getNewsById, getSimilarArticles } from '../services/newsService'
 import { bookmarkArticle, unbookmarkArticle, checkBookmark } from '../services/authService'
+import { stripHtmlTags } from '../utils/articleHelpers'
+import NewsCard from './NewsCard'
 
 const ArticleDetail = ({ isAuthenticated }) => {
   const { id } = useParams()
@@ -11,6 +13,22 @@ const ArticleDetail = ({ isAuthenticated }) => {
   const [error, setError] = useState('')
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(false)
+  const [similarArticles, setSimilarArticles] = useState([])
+  const [loadingSimilar, setLoadingSimilar] = useState(false)
+
+  // Utility function to extract article ID from URL
+  const getArticleIdFromUrl = (article) => {
+    // First check if id is directly available (for future compatibility)
+    if (article?.id) return article.id
+    
+    // Extract from URL field
+    if (article?.url) {
+      const match = article.url.match(/\/articles\/([^\/]+)\/?$/)
+      return match ? match[1] : null
+    }
+    
+    return null
+  }
 
   useEffect(() => {
     loadArticle()
@@ -21,6 +39,13 @@ const ArticleDetail = ({ isAuthenticated }) => {
       checkBookmarkStatus()
     }
   }, [isAuthenticated, article])
+
+  useEffect(() => {
+    const articleId = getArticleIdFromUrl(article)
+    if (articleId) {
+      fetchSimilarArticles(articleId)
+    }
+  }, [article])
 
   const loadArticle = async () => {
     setIsLoading(true)
@@ -73,6 +98,22 @@ const ArticleDetail = ({ isAuthenticated }) => {
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error)
+    }
+  }
+
+  const fetchSimilarArticles = async (articleId = null) => {
+    const id = articleId || getArticleIdFromUrl(article)
+    if (!id) return
+    
+    setLoadingSimilar(true)
+    try {
+      const similar = await getSimilarArticles(id)
+      setSimilarArticles(similar)
+    } catch (error) {
+      console.error('Error fetching similar articles:', error)
+      setSimilarArticles([])
+    } finally {
+      setLoadingSimilar(false)
     }
   }
 
@@ -198,7 +239,7 @@ const ArticleDetail = ({ isAuthenticated }) => {
 
             {/* Title */}
             <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
-              {article.headline || article.web_title}
+              {stripHtmlTags(article.headline || article.web_title)}
             </h1>
 
             {/* Metadata */}
@@ -250,7 +291,7 @@ const ArticleDetail = ({ isAuthenticated }) => {
             {article.trail_text && (
               <div className="mb-6">
                 <p className="text-xl text-gray-700 leading-relaxed font-medium italic">
-                  {article.trail_text}
+                  {stripHtmlTags(article.trail_text)}
                 </p>
               </div>
             )}
@@ -286,6 +327,30 @@ const ArticleDetail = ({ isAuthenticated }) => {
             )}
           </div>
         </article>
+
+        {/* Related Articles Section */}
+        <div className="mt-12 border-t pt-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Related articles</h2>
+          {loadingSimilar ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+          ) : similarArticles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {similarArticles.map(article => (
+                <NewsCard 
+                  key={article.guardian_id} 
+                  article={article} 
+                  isAuthenticated={isAuthenticated} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p>No related articles found.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

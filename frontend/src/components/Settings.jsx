@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCurrentUser, updateProfile } from '../services/authService'
+import { getCurrentUser, updateProfile, updatePersona, updateSectionPreferences } from '../services/authService'
 
 const Settings = ({ user: initialUser, onUpdate }) => {
   const navigate = useNavigate()
@@ -13,14 +13,46 @@ const Settings = ({ user: initialUser, onUpdate }) => {
     gender: '',
     birthday: ''
   })
+  const [personaData, setPersonaData] = useState({
+    tone: '',
+    style: '',
+    length: '',
+    extra_instructions: ''
+  })
+  const [sections, setSections] = useState([])
+  const [loadingSections, setLoadingSections] = useState(true)
+  const [preferredSections, setPreferredSections] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSavingPersona, setIsSavingPersona] = useState(false)
+  const [isSavingSections, setIsSavingSections] = useState(false)
   const [error, setError] = useState('')
+  const [personaError, setPersonaError] = useState('')
+  const [sectionsError, setSectionsError] = useState('')
   const [success, setSuccess] = useState('')
+  const [personaSuccess, setPersonaSuccess] = useState('')
+  const [sectionsSuccess, setSectionsSuccess] = useState('')
 
   useEffect(() => {
     loadUserData()
+    fetchSections()
   }, [])
+
+  const fetchSections = async () => {
+    setLoadingSections(true)
+    try {
+      const response = await fetch('http://localhost:8000/sections/')
+      const data = await response.json()
+      // Handle paginated response from DRF - extract results array
+      const sectionsList = data.results || data || []
+      setSections(sectionsList)
+    } catch (err) {
+      console.error('Error fetching sections:', err)
+      setSectionsError('Failed to load sections. Please refresh the page.')
+    } finally {
+      setLoadingSections(false)
+    }
+  }
 
   useEffect(() => {
     if (user) {
@@ -32,6 +64,19 @@ const Settings = ({ user: initialUser, onUpdate }) => {
         gender: user.gender || '',
         birthday: user.birthday ? user.birthday.split('T')[0] : ''
       })
+      if (user.persona) {
+        setPersonaData({
+          tone: user.persona.tone || '',
+          style: user.persona.style || '',
+          length: user.persona.length || '',
+          extra_instructions: user.persona.extra_instructions || ''
+        })
+      }
+      if (user.preferred_sections) {
+        // Convert preferred sections to array of section_id strings
+        const sectionIds = user.preferred_sections.map(section => section.section_id || section)
+        setPreferredSections(sectionIds)
+      }
     }
   }, [user])
 
@@ -59,6 +104,16 @@ const Settings = ({ user: initialUser, onUpdate }) => {
     }))
     setError('')
     setSuccess('')
+  }
+
+  const handlePersonaChange = (e) => {
+    const { name, value } = e.target
+    setPersonaData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    setPersonaError('')
+    setPersonaSuccess('')
   }
 
   const handleSubmit = async (e) => {
@@ -93,6 +148,112 @@ const Settings = ({ user: initialUser, onUpdate }) => {
       setError('An unexpected error occurred')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handlePersonaSubmit = async (e) => {
+    e.preventDefault()
+    setIsSavingPersona(true)
+    setPersonaError('')
+    setPersonaSuccess('')
+
+    try {
+      const result = await updatePersona(personaData)
+      
+      if (result.success) {
+        // Reload user data to get updated persona
+        const userResult = await getCurrentUser()
+        if (userResult.success) {
+          setUser(userResult.user)
+          if (onUpdate) {
+            onUpdate(userResult.user)
+          }
+        }
+        setPersonaSuccess('Content preferences updated successfully!')
+        setTimeout(() => setPersonaSuccess(''), 3000)
+      } else {
+        if (result.error && typeof result.error === 'object') {
+          const errorMessages = Object.entries(result.error)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('\n')
+          setPersonaError(errorMessages)
+        } else {
+          setPersonaError(result.error || 'Failed to update content preferences')
+        }
+      }
+    } catch (err) {
+      setPersonaError('An unexpected error occurred')
+    } finally {
+      setIsSavingPersona(false)
+    }
+  }
+
+  const handleSectionToggle = (sectionId) => {
+    setPreferredSections(prev => {
+      const isSelected = prev.includes(sectionId)
+      
+      if (isSelected) {
+        // Don't allow removing if it's the last section
+        if (prev.length <= 1) {
+          setSectionsError('At least one section must be selected')
+          return prev
+        }
+        setSectionsError('')
+        return prev.filter(id => id !== sectionId)
+      } else {
+        setSectionsError('')
+        return [...prev, sectionId]
+      }
+    })
+    setSectionsSuccess('')
+  }
+
+  const handleSectionsSubmit = async (e) => {
+    e.preventDefault()
+    setIsSavingSections(true)
+    setSectionsError('')
+    setSectionsSuccess('')
+
+    // Validation
+    if (preferredSections.length === 0) {
+      setSectionsError('Please select at least one preferred section')
+      setIsSavingSections(false)
+      return
+    }
+
+    try {
+      // Convert section IDs to format expected by backend (array of objects with section_id)
+      const sectionsData = preferredSections.map(sectionId => ({
+        section_id: sectionId
+      }))
+
+      const result = await updateSectionPreferences(sectionsData)
+      
+      if (result.success) {
+        // Reload user data to get updated sections
+        const userResult = await getCurrentUser()
+        if (userResult.success) {
+          setUser(userResult.user)
+          if (onUpdate) {
+            onUpdate(userResult.user)
+          }
+        }
+        setSectionsSuccess('Preferred sections updated successfully!')
+        setTimeout(() => setSectionsSuccess(''), 3000)
+      } else {
+        if (result.error && typeof result.error === 'object') {
+          const errorMessages = Object.entries(result.error)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('\n')
+          setSectionsError(errorMessages)
+        } else {
+          setSectionsError(result.error || 'Failed to update preferred sections')
+        }
+      }
+    } catch (err) {
+      setSectionsError('An unexpected error occurred')
+    } finally {
+      setIsSavingSections(false)
     }
   }
 
@@ -254,6 +415,185 @@ const Settings = ({ user: initialUser, onUpdate }) => {
                 className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </form>
+
+          {/* Content Preferences (Persona) */}
+          <form onSubmit={handlePersonaSubmit} className="mt-8 space-y-6 border-t pt-8">
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                Content Preferences
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Customize how your news articles are written and presented
+              </p>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="tone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tone
+                  </label>
+                  <select
+                    id="tone"
+                    name="tone"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={personaData.tone}
+                    onChange={handlePersonaChange}
+                  >
+                    <option value="">Select tone</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="professional">Professional</option>
+                    <option value="casual">Casual</option>
+                    <option value="formal">Formal</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="style" className="block text-sm font-medium text-gray-700 mb-1">
+                    Style
+                  </label>
+                  <select
+                    id="style"
+                    name="style"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={personaData.style}
+                    onChange={handlePersonaChange}
+                  >
+                    <option value="">Select style</option>
+                    <option value="concise">Concise</option>
+                    <option value="detailed">Detailed</option>
+                    <option value="balanced">Balanced</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="length" className="block text-sm font-medium text-gray-700 mb-1">
+                    Length
+                  </label>
+                  <select
+                    id="length"
+                    name="length"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={personaData.length}
+                    onChange={handlePersonaChange}
+                  >
+                    <option value="">Select length</option>
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="extra_instructions" className="block text-sm font-medium text-gray-700 mb-1">
+                  Extra Instructions (Optional)
+                </label>
+                <textarea
+                  id="extra_instructions"
+                  name="extra_instructions"
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={personaData.extra_instructions}
+                  onChange={handlePersonaChange}
+                  placeholder="Any additional instructions for how you'd like your news to be written..."
+                />
+              </div>
+            </div>
+
+            {personaError && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-sm text-red-600 whitespace-pre-line">{personaError}</p>
+              </div>
+            )}
+
+            {personaSuccess && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <p className="text-sm text-green-600">{personaSuccess}</p>
+              </div>
+            )}
+
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={isSavingPersona}
+                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSavingPersona ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </div>
+                ) : (
+                  'Save Content Preferences'
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Preferred Sections */}
+          <form onSubmit={handleSectionsSubmit} className="mt-8 space-y-6 border-t pt-8">
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                Preferred Sections
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Select the news categories you're interested in (at least one required)
+              </p>
+              
+              {loadingSections ? (
+                <p className="text-sm text-gray-500">Loading sections...</p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-4">
+                  {sections.map(section => {
+                    const sectionId = section.section_id || section.id
+                    const isSelected = preferredSections.includes(sectionId)
+                    return (
+                      <label key={sectionId} className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleSectionToggle(sectionId)}
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-sm text-gray-700">{section.web_title || section.section_name}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {sectionsError && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-sm text-red-600 whitespace-pre-line">{sectionsError}</p>
+              </div>
+            )}
+
+            {sectionsSuccess && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <p className="text-sm text-green-600">{sectionsSuccess}</p>
+              </div>
+            )}
+
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={isSavingSections || preferredSections.length === 0}
+                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSavingSections ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </div>
+                ) : (
+                  'Save Preferred Sections'
+                )}
               </button>
             </div>
           </form>
