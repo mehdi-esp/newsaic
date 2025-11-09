@@ -66,12 +66,16 @@ function App() {
     }
   }
 
-  const handleLoginSuccess = async () => {
+  const handleLoginSuccess = async (redirectPath = null) => {
     setLoginLoading(true)
     try {
       // Add a small delay to ensure the session is fully established
       await new Promise(resolve => setTimeout(resolve, 500))
       await checkAuthentication()
+      // Navigate to redirect path if provided
+      if (redirectPath) {
+        navigate(redirectPath)
+      }
     } finally {
       setLoginLoading(false)
     }

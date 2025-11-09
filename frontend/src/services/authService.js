@@ -182,6 +182,64 @@ export const updateProfile = async (userData) => {
 }
 
 /**
+ * Update user persona
+ * @param {Object} personaData - Persona data to update (tone, style, length, extra_instructions)
+ * @returns {Promise<Object>} Update response
+ */
+export const updatePersona = async (personaData) => {
+  try {
+    const csrfToken = getCSRFToken()
+    
+    const response = await apiClient.patch('/me/persona/', personaData, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    
+    return {
+      success: true,
+      persona: response.data
+    }
+  } catch (error) {
+    console.error('Update persona error:', error)
+    return {
+      success: false,
+      error: error.response?.data || error.message || 'Failed to update persona'
+    }
+  }
+}
+
+/**
+ * Update user section preferences
+ * @param {Array} preferredSections - Array of section objects with section_id field
+ * @returns {Promise<Object>} Update response
+ */
+export const updateSectionPreferences = async (preferredSections) => {
+  try {
+    const csrfToken = getCSRFToken()
+    
+    const response = await apiClient.patch('/me/sections/', {
+      preferred_sections: preferredSections
+    }, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
+    })
+    
+    return {
+      success: true,
+      user: response.data
+    }
+  } catch (error) {
+    console.error('Update section preferences error:', error)
+    return {
+      success: false,
+      error: error.response?.data || error.message || 'Failed to update section preferences'
+    }
+  }
+}
+
+/**
  * Bookmark an article
  * @param {string} url - Article url
  * @returns {Promise<Object>} Bookmark response

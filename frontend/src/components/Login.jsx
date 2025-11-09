@@ -29,7 +29,7 @@ const Login = ({ onLoginSuccess }) => {
       if (result.success) {
         // Set loading to 'authenticating' while authentication is being verified
         setIsLoading('authenticating')
-        await onLoginSuccess()
+        await onLoginSuccess('/')
         // Don't set loading to false here - let the parent component handle it
       } else {
         setError(result.error || 'Login failed')

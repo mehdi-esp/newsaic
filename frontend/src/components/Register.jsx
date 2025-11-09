@@ -116,7 +116,7 @@ const Register = ({ onRegisterSuccess }) => {
       
       if (result.success) {
         setIsLoading('authenticating')
-        await onRegisterSuccess()
+        await onRegisterSuccess('/for-you')
       } else {
         // Handle validation errors
         if (result.error && typeof result.error === 'object') {
