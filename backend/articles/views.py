@@ -8,9 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from users.permissions import BookmarkPermission
 from django_mongodb_backend.expressions import SearchVector
-import ollama
-
-EMBEDDING_MODEL = "qwen3-embedding:0.6B"
+from utils.embeddings import embed
 
 class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ArticleSerializer
@@ -28,7 +26,7 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
 
         if query := self.request.query_params.get('q'):
-            embedded_query = ollama.embed(EMBEDDING_MODEL, [query])["embeddings"][0]
+            embedded_query = embed([query])[0]
 
             results = Chunk.objects.annotate(
                 score=SearchVector(
@@ -67,8 +65,8 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Article.objects.all().order_by("-first_publication_date")
 
-    @action(detail=True, methods=["get"])
-    def recommended_articles(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="similar")
+    def similar_articles(self, request, pk=None):
         """
         Return the 3 most similar articles (vector similarity)
         excluding the article itself.

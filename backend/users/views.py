@@ -49,7 +49,7 @@ class BookmarkViewSet(mixins.ListModelMixin,
     permission_classes = [permissions.IsAuthenticated, IsNewsReader] # Admins cannot see bookmarks for now
 
     def get_queryset(self):
-        return Bookmark.objects.filter(user=self.request.user)
+        return Bookmark.objects.filter(user=self.request.user).order_by("-saved_at")
 
 class ReaderRegisterView(generics.CreateAPIView):
     serializer_class = ReaderRegisterSerializer

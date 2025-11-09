@@ -3,6 +3,7 @@ django-extensions==4.1
 django-filter==25.2
 django-mongodb-backend==5.2.1
 djangorestframework==3.16.1
+drf-extensions
 ollama
 groq
 celery
@@ -21,3 +22,4 @@ langchain-text-splitters
 tiktoken
 torch
 numpy<2.0
+openai
