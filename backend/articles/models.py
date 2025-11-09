@@ -3,7 +3,6 @@ from django.conf import settings
 from django_mongodb_backend.fields import EmbeddedModelField, ArrayField, EmbeddedModelArrayField
 from django_mongodb_backend.models import EmbeddedModel
 from django_mongodb_backend.indexes import SearchIndex, VectorSearchIndex
-from django.utils.html import strip_tags
 
 class Section(models.Model):
     section_id = models.CharField(max_length=100, unique=True)
@@ -115,10 +114,10 @@ class Article(models.Model):
             guardian_id=item.get("id"),
             section_id=item.get("sectionId"),
             section_name=item.get("sectionName"),
-            web_title=strip_tags(item.get("webTitle", "")),
+            web_title=item.get("webTitle"),
             web_url=item.get("webUrl"),
             api_url=item.get("apiUrl"),
-            headline=strip_tags(fields.get("headline", "")) if fields.get("headline") else None,
+            headline=fields.get("headline"),
             trail_text=fields.get("trailText"),
             body_text=fields.get("bodyText"),
             thumbnail=fields.get("thumbnail"),
