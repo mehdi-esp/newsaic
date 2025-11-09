@@ -291,7 +291,7 @@ const ArticleDetail = ({ isAuthenticated }) => {
             {article.trail_text && (
               <div className="mb-6">
                 <p className="text-xl text-gray-700 leading-relaxed font-medium italic">
-                  {article.trail_text}
+                  {stripHtmlTags(article.trail_text)}
                 </p>
               </div>
             )}

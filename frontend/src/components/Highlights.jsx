@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { getDailyHighlights } from '../services/highlightsService'
+import { stripHtmlTags } from '../utils/articleHelpers'
 import AudioPlayer from './AudioPlayer'
 
 const Highlights = () => {
@@ -256,7 +257,7 @@ const Highlights = () => {
                         />
                       </div>
                     )}
-                    <h2 className={`${!isSingleStoryView && thumbnail ? 'flex-1' : ''} text-2xl font-bold text-gray-900`}>{story.title}</h2>
+                    <h2 className={`${!isSingleStoryView && thumbnail ? 'flex-1' : ''} text-2xl font-bold text-gray-900`}>{stripHtmlTags(story.title)}</h2>
                   </div>
 
                 {/* Audio Player */}
@@ -304,7 +305,7 @@ const Highlights = () => {
                         }
                         
                         const articleUrl = getArticleUrl()
-                        const articleTitle = article.web_title || article.title || 'View Article'
+                        const articleTitle = stripHtmlTags(article.web_title || article.title || 'View Article')
                         
                         if (!articleUrl) {
                           return (
