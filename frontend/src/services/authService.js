@@ -34,6 +34,23 @@ const getCSRFToken = () => {
 }
 
 /**
+ * Fetch CSRF token cookie from Django by making a GET request
+ * This sets the csrftoken cookie in the browser
+ * @returns {Promise<void>}
+ */
+export const fetchCSRFToken = async () => {
+  try {
+    // Make a GET request to any endpoint to get CSRF cookie
+    // Using /sections/ as it's a simple endpoint that doesn't require auth
+    await apiClient.get('/sections/')
+  } catch (error) {
+    // Even if the request fails, the CSRF cookie might still be set
+    // Log error but don't throw - we'll check for token availability later
+    console.warn('CSRF token fetch warning:', error)
+  }
+}
+
+/**
  * Login user with Django session authentication
  * @param {string} username - Username
  * @param {string} password - Password
@@ -41,10 +58,21 @@ const getCSRFToken = () => {
  */
 export const login = async (username, password) => {
   try {
+    // Ensure CSRF token is available
+    let csrfToken = getCSRFToken()
+    if (!csrfToken) {
+      // Fetch CSRF token if not available
+      await fetchCSRFToken()
+      csrfToken = getCSRFToken()
+    }
 
     const response = await apiClient.post('/login/', {
       username,
       password
+    }, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      }
     })
     return {
       success: true,

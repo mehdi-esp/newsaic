@@ -78,3 +78,45 @@ export const getNewsById = async (id) => {
     return mockNewsData.find(article => article.guardian_id === id)
   }
 }
+
+/**
+ * Get recommended articles for the current user
+ * Uses preferred sections endpoint
+ * @returns {Promise<Array>} Array of recommended articles
+ */
+export const getRecommendedArticles = async () => {
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    return mockNewsData
+  }
+
+  try {
+    const response = await apiClient.get('/articles/', { 
+      params: { preferred: true } 
+    })
+    return response.data.results || response.data
+  } catch (error) {
+    console.error('Error fetching recommended articles:', error)
+    throw error
+  }
+}
+
+/**
+ * Get similar articles for a specific article
+ * @param {string} articleId - The article guardian_id
+ * @returns {Promise<Array>} Array of similar articles
+ */
+export const getSimilarArticles = async (articleId) => {
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    return mockNewsData.slice(0, 3)
+  }
+
+  try {
+    const response = await apiClient.get(`/articles/${articleId}/similar/`)
+    return response.data || []
+  } catch (error) {
+    console.error('Error fetching similar articles:', error)
+    return []
+  }
+}
