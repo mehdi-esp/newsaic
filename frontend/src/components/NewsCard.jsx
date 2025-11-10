@@ -137,7 +137,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
             {stripHtmlTags(article.headline || article.web_title)}
           </h3>
           <p className="text-gray-600 mb-6 line-clamp-4 leading-relaxed flex-1">
-            {article.trail_text || article.body_text || 'No description available'}
+            {stripHtmlTags(article.trail_text || article.body_text || 'No description available')}
           </p>
           <div className="flex justify-between items-center pt-4 border-t border-gray-200 text-sm text-gray-600">
             <span className="font-medium text-gray-900">{getAuthorNames()}</span>
@@ -211,7 +211,7 @@ function NewsCard({ article, featured = false, compact = false, isAuthenticated 
           {stripHtmlTags(article.headline || article.web_title)}
         </h3>
         <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed flex-1">
-          {article.trail_text || article.body_text || 'No description available'}
+          {stripHtmlTags(article.trail_text || article.body_text || 'No description available')}
         </p>
         <div className="flex justify-between items-center pt-3 border-t border-gray-200 text-sm text-gray-600">
           <span className="font-medium text-gray-900">{getAuthorNames()}</span>
