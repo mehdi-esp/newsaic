@@ -17,13 +17,21 @@ const ArticleDetail = ({ isAuthenticated }) => {
   const [loadingSimilar, setLoadingSimilar] = useState(false)
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState(null)
+  const [sources, setSources] = useState([])
   const [isAsking, setIsAsking] = useState(false)
+
+  // Debug: Log sources state changes
+  useEffect(() => {
+    console.log('Sources state:', sources)
+    console.log('Sources length:', sources.length)
+  }, [sources])
 
   const handleAskQuestion = async () => {
     if (!question.trim()) return
 
     setIsAsking(true)
     setAnswer(null)
+    setSources([])
 
     try {
       const response = await fetch(`http://localhost:8000/articles/${id}/qa/`, {
@@ -39,14 +47,21 @@ const ArticleDetail = ({ isAuthenticated }) => {
 
 
       const data = await response.json()
+      console.log('QA Response:', data) // Debug log
+      console.log('Used chunks:', data.used_chunks) // Debug log
+      console.log('Sources length:', data.used_chunks?.length || 0) // Debug log
       if (data.answer) {
         setAnswer(data.answer)
+        setSources(data.used_chunks || [])
+        console.log('Sources set to:', data.used_chunks || []) // Debug log
       } else {
         setAnswer('No answer found.')
+        setSources([])
       }
     } catch (error) {
       console.error('Error asking question:', error)
       setAnswer('Error while getting answer.')
+      setSources([])
     } finally {
       setIsAsking(false)
     }
@@ -77,6 +92,7 @@ const ArticleDetail = ({ isAuthenticated }) => {
     // Reset QA state when article changes
     setQuestion('')
     setAnswer(null)
+    setSources([])
     setIsAsking(false)
   }, [id])
 
@@ -387,9 +403,35 @@ const ArticleDetail = ({ isAuthenticated }) => {
 
               {answer && (
                 <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
-                  <p className="text-gray-800">
+                  <p className="text-gray-800 mb-4">
                     <span className="font-semibold text-indigo-600">Answer:</span> {answer}
                   </p>
+                  
+                  {sources && sources.length > 0 && (() => {
+                    console.log('Rendering sources:', sources) // Debug log
+                    return (
+                      <div className="mt-4 pt-4 border-t border-gray-300">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-3">Sources:</h3>
+                      <ul className="space-y-3">
+                        {sources.map((source, index) => (
+                          <li key={index} className="text-sm">
+                            <a 
+                              href={source.article_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:text-indigo-800 underline font-medium block mb-1"
+                            >
+                              {stripHtmlTags(source.article_title)}
+                            </a>
+                            <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                              {stripHtmlTags(source.excerpt)}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
             </div>
