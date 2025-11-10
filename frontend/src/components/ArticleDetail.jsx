@@ -26,7 +26,7 @@ const ArticleDetail = ({ isAuthenticated }) => {
     setAnswer(null)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/articles/${id}/qa/`, {
+      const response = await fetch(`http://localhost:8000/articles/${id}/qa/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
