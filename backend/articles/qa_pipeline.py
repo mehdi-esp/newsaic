@@ -57,7 +57,7 @@ def get_query_refiner_prompt(article: Article, user_question: str) -> ChatPrompt
     """
     Builds the prompt to refine user question for better vector search.
     """
-    article_context = f"Title: {article.web_title}\nSection: {article.section_name}\n\nExcerpt:\n{article.body_text[:600]}…"
+    article_context = f"Title: {article.web_title}\nSection: {article.section_name}\n\nArticle:\n{article.body_text}…"
     system_prompt = """
     You are a query optimization assistant.
     Your task: rewrite the user's question into a concise, context-aware query for semantic vector search.
@@ -118,29 +118,33 @@ def vector_search(refined_query: str, limit: int = 5):
 # STAGE 3: ANSWER GENERATION
 # ------------------------------
 
-def get_answer_prompt(article: Article | None, question: str, retrieved_chunks: list[Chunk]) -> ChatPromptTemplate:
+def get_answer_prompt(article: Article, question: str, retrieved_chunks: list[Chunk]) -> ChatPromptTemplate:
     chunks_text = "\n\n".join([f"[Chunk {c.id}] {c.text}" for c in retrieved_chunks])
 
     system_prompt = """
     You are an expert assistant tasked with answering user questions using only the provided chunks and article.
-    Never invent facts. If an answer is not found in the chunks, say "The article does not provide this information."
+    Never invent facts. If an answer is not found in the chunks, say "I don’t have enough information to answer that question."
     Be concise, factual, and neutral.
     """
 
-    article_title = article.web_title if article else "Unknown article"
-    section_name = article.section_name if article else "Unknown section"
+    article_title = article.web_title
+    section_name = article.section_name
 
     user_prompt = f"""
-    Article title: {article_title}
-    Section: {section_name}
+    Answer the question using only the information below. Do not invent information.
 
     Question: {question}
 
-    Retrieved Chunks:
-    {chunks_text}
+    Article title: {article_title}
+    Section: {section_name}
 
-    Now, answer using only the information above.
+    Article Body:
+    {article.body_text}
+
+    Reference material that may help answer the question:
+    {chunks_text}
     """
+
 
     return ChatPromptTemplate.from_messages([
         ("system", system_prompt.strip()),
@@ -150,12 +154,12 @@ def get_answer_prompt(article: Article | None, question: str, retrieved_chunks: 
 
 
 
-def generate_answer(question: str, retrieved_chunks: list[Chunk], llm):
+def generate_answer(article: Article, question: str, retrieved_chunks: list[Chunk], llm):
     """
     Runs the answer LLM and returns structured answer including used chunk texts and their source articles.
     """
     # Build a dummy article context for the prompt if needed
-    prompt = get_answer_prompt(None, question, retrieved_chunks)  # we can make article optional
+    prompt = get_answer_prompt(article, question, retrieved_chunks)
     chain = prompt | llm
     result: QAResponse = chain.invoke({})
 
@@ -196,7 +200,7 @@ def run_article_qa_pipeline(user: User, article: Article, question: str):
 
     # Step 3: Answer Generation
     llm_answer = get_llm("moonshotai/kimi-k2-instruct-0905", structured_class=QAResponse)
-    result = generate_answer(question, retrieved_chunks, llm_answer)
+    result = generate_answer(article, question, retrieved_chunks, llm_answer)
 
     return result
 
