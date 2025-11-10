@@ -10,6 +10,7 @@ from users.permissions import BookmarkPermission
 from django_mongodb_backend.expressions import SearchVector
 from utils.embeddings import embed
 from .qa_pipeline import run_article_qa_pipeline
+import traceback
 
 class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ArticleSerializer
@@ -125,20 +126,21 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
         
     @action(detail=True, methods=["post"], url_path="qa")
     def qa(self, request, pk=None):
-        """
-        Answer a question for this article using the QA pipeline.
-        """
         question = request.data.get("question")
         if not question:
             return Response({"error": "Missing question"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Run QA pipeline scoped to this article
-        result = run_article_qa_pipeline(request.user, article_id=pk, question=question)
-
-        return Response({
-            "answer": result.answer,
-            "used_chunks": result.used_chunks  # keep only this
-        })
+        try:
+            result = run_article_qa_pipeline(request.user, article_id=pk, question=question)
+            return Response({
+                "answer": result.answer,
+                "used_chunks": result.used_chunks
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print("Error in QA pipeline:", str(e))
+            traceback.print_exc()
+            return Response({"error": "Internal server error while processing question."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SectionViewSet(viewsets.ReadOnlyModelViewSet):

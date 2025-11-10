@@ -15,6 +15,49 @@ const ArticleDetail = ({ isAuthenticated }) => {
   const [isCheckingBookmark, setIsCheckingBookmark] = useState(false)
   const [similarArticles, setSimilarArticles] = useState([])
   const [loadingSimilar, setLoadingSimilar] = useState(false)
+  const [question, setQuestion] = useState('')
+  const [answer, setAnswer] = useState(null)
+  const [isAsking, setIsAsking] = useState(false)
+
+  const handleAskQuestion = async () => {
+    if (!question.trim()) return
+
+    setIsAsking(true)
+    setAnswer(null)
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/articles/${id}/qa/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'), // only if CSRF middleware is active
+        },
+        body: JSON.stringify({ question }),
+      })
+
+
+
+
+      const data = await response.json()
+      if (data.answer) {
+        setAnswer(data.answer)
+      } else {
+        setAnswer('No answer found.')
+      }
+    } catch (error) {
+      console.error('Error asking question:', error)
+      setAnswer('Error while getting answer.')
+    } finally {
+      setIsAsking(false)
+    }
+  }
+
+  // Helper to get CSRF token if Django’s CSRF middleware is active
+  function getCookie(name) {
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) return parts.pop().split(';').shift()
+  }
 
   // Utility function to extract article ID from URL
   const getArticleIdFromUrl = (article) => {
@@ -29,6 +72,14 @@ const ArticleDetail = ({ isAuthenticated }) => {
     
     return null
   }
+
+  useEffect(() => {
+    // Reset QA state when article changes
+    setQuestion('')
+    setAnswer(null)
+    setIsAsking(false)
+  }, [id])
+
 
   useEffect(() => {
     loadArticle()
@@ -308,6 +359,41 @@ const ArticleDetail = ({ isAuthenticated }) => {
                 </div>
               </div>
             )}
+
+            {/* Ask a Question Section */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Ask a Question about this article
+              </h2>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder="Type your question here..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+                <button
+                  onClick={handleAskQuestion}
+                  disabled={isAsking || !question.trim()}
+                  className={`px-6 py-2 rounded-md text-white font-medium transition-all ${
+                    isAsking ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
+                >
+                  {isAsking ? 'Asking...' : 'Ask'}
+                </button>
+              </div>
+
+              {answer && (
+                <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+                  <p className="text-gray-800">
+                    <span className="font-semibold text-indigo-600">Answer:</span> {answer}
+                  </p>
+                </div>
+              )}
+            </div>
+
 
             {/* Read on Guardian Link */}
             {article.web_url && (
