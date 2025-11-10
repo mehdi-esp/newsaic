@@ -130,8 +130,9 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
         if not question:
             return Response({"error": "Missing question"}, status=status.HTTP_400_BAD_REQUEST)
 
+        article = self.get_object()
         try:
-            result = run_article_qa_pipeline(request.user, article_id=pk, question=question)
+            result = run_article_qa_pipeline(request.user, article=article, question=question)
             return Response({
                 "answer": result.answer,
                 "used_chunks": result.used_chunks

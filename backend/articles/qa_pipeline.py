@@ -180,17 +180,16 @@ def generate_answer(question: str, retrieved_chunks: list[Chunk], llm):
 # MAIN PIPELINE
 # ------------------------------
 
-def run_article_qa_pipeline(user: User, article_id: str | None, question: str):
+def run_article_qa_pipeline(user: User, article: Article, question: str):
     """
     Complete QA flow for a user's question.
     If article_id is None, the QA is fully dataset-wide.
     """
-    # Optional: load the article if you want context
-    article = Article.objects.get(id=article_id) if article_id else None
 
     # Step 1: Query Refinement (can skip article context if article is None)
     llm_refiner = get_llm("moonshotai/kimi-k2-instruct-0905", structured_class=RefinedQuery)
-    refined_query = generate_refined_query(article, question, llm_refiner) if article else question
+    refined_query = generate_refined_query(article, question, llm_refiner)
+    print(f"Refined query: {refined_query}")
 
     # Step 2: Vector Search
     retrieved_chunks = vector_search(refined_query, limit=5)
