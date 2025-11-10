@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import NewsFeed from './components/NewsFeed'
 import CategoryFilter from './components/CategoryFilter'
@@ -24,6 +24,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
   const navigate = useNavigate()
+  const location = useLocation()
   const [authLoading, setAuthLoading] = useState(true)
   const [loginLoading, setLoginLoading] = useState(false)
   
@@ -44,6 +45,15 @@ function App() {
   useEffect(() => {
     fetchNews()
   }, [])
+
+  // Sync selectedFeed with current route
+  useEffect(() => {
+    if (location.pathname === '/for-you') {
+      setSelectedFeed('foryou')
+    } else if (location.pathname === '/') {
+      setSelectedFeed('general')
+    }
+  }, [location.pathname])
 
   // Fetch preferred articles when switching to "For You" feed
   useEffect(() => {
