@@ -278,7 +278,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
-            "--user_id",
+            "--user-id",
             type=str,
             help="Generate highlights for a specific user ID.",
         )
