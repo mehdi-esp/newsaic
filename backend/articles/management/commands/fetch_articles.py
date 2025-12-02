@@ -5,8 +5,6 @@ from articles.models import Article
 import os
 from django.core.management.base import BaseCommand
 import logging
-from django.core.management import call_command
-from django.utils import timezone as django_timezone
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -188,11 +186,6 @@ class Command(BaseCommand):
             help='Maximum number of pages to fetch',
         )
         parser.add_argument(
-            '--embed',
-            action='store_true',
-            help='After fetching, run embedding pipelines (embed_articles + embed_article_chunks)',
-        )
-        parser.add_argument(
             '--repeat',
             type=int,
             nargs='?',
@@ -211,12 +204,7 @@ class Command(BaseCommand):
                     page_size=options['page_size'],
                     max_pages=options['max_pages'],
                 )
-                if options['embed']:
-                    call_command("embed_articles")
-                    call_command("embed_article_chunks")
-                next_run = django_timezone.localtime() + timedelta(minutes=interval)
-                logger.info(f"Next fetch at {next_run} (local time)")
-                logger.info(f"Waiting {options['repeat']} minutes — next fetch at {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
+                logger.info(f"Waiting for {options['repeat']} minutes before next fetch...")
                 time.sleep(interval)
         else:
             fetch_guardian_articles(
@@ -225,7 +213,3 @@ class Command(BaseCommand):
                 page_size=options['page_size'],
                 max_pages=options['max_pages'],
             )
-
-            if options['embed']:
-                call_command("embed_articles")
-                call_command("embed_article_chunks")
