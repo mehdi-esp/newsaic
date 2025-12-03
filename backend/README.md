@@ -1,5 +1,7 @@
 # Backend
 
+The project requires Python 3.12.
+
 All operations should be performed from the current directory.
 
 ## Setup
