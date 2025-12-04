@@ -8,8 +8,6 @@ All operations should be performed from the current directory.
 
 ### Install dependencies
 
-Create a virtual environment (or use `direnv`), then install the dependencies:
-
 ```bash
 pip install -r requirements.txt
 ```
@@ -39,6 +37,14 @@ python manage.py migrate
 python manage.py fetch_sections
 ```
 
+### Ollama
+
+If embedding with Ollama, install it and pull the model:
+
+```bash
+ollama pull qwen3-embedding:0.6b
+```
+
 ## Running
 
 ### Run server
@@ -56,7 +62,6 @@ python manage.py fetch_articles
 ```
 
 **Article Chunk Embedding (for RAG & Semantic Search)**
-
 
 ```bash
 python manage.py embed_article_chunks
